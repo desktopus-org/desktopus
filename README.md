@@ -1,4 +1,4 @@
-# Ubuntu XFCE docker (With Docker in docker, audio and video acceleration)
+# Ubuntu XFCE docker (With Docker in Docker, audio and video acceleration)
 
 A reproducible ubuntu desktop in docker with docker!
 

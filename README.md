@@ -11,7 +11,7 @@ It supports:
 ./run_ubuntu.sh --basic
 ```
 
-## Run with audio with pulseaudio and hardware acceleration:
+## Run with audio(pulseaudio) and hardware acceleration:
 
 It suports:
 - Audio

@@ -9,6 +9,8 @@ apt-get install -y vim wget net-tools locales bzip2 \
 
 # For audio and gpu acceleration
 apt-get install -y alsa-utils \
+	mesa-utils \
+	mesa-utils-extra \
 	libgl1-mesa-dri \
 	libgl1-mesa-glx \
 	libpulse0 \

@@ -45,6 +45,14 @@ INFO "Creating docker group and adding userdocker to the group"
 groupadd docker
 usermod -aG docker userdocker
 
+INFO "Adding userdocker to audio group"
+usermod -a -G audio userdocker
+
+INFO "Adding userdocker to video and render group for hw acceleration"
+usermod -a -G video userdocker
+groupadd render
+usermod -a -G render userdocker
+
 INFO "Starting supervisor"
 
 /usr/bin/supervisord -n >> /dev/null 2>&1 &

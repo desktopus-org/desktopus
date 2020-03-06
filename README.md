@@ -21,3 +21,7 @@ It suports:
 ```
 ./run_ubuntu.sh --audio-video
 ```
+
+## Credentials
+Ubuntu user password: userpassword
+VCN Password: vncpassword

@@ -23,5 +23,7 @@ It suports:
 ```
 
 ## Credentials
+
 Ubuntu user password: userpassword
+
 VCN Password: vncpassword

@@ -24,7 +24,7 @@ if [ "$#" -gt 0 ]; then
 
         # Create pulseaudio socket
         pactl load-module module-native-protocol-unix socket=/tmp/pulseaudio.socket
-        
+
         # Create /tmp/pulseaudio.client.conf for pulseaudio clients
         create_pulse_audio_conf
 
@@ -39,6 +39,8 @@ if [ "$#" -gt 0 ]; then
         --volume /tmp/pulseaudio.client.conf:/etc/pulse/client.conf \
         --device /dev/dri \
         --device /dev/vga_arbiter \
+        --device /dev/video0 \
+        --device /dev/snd:/dev/snd \
         cruizba/ubuntu-xfce-docker
     fi
 fi

@@ -3,8 +3,9 @@
 A reproducible ubuntu desktop in docker with docker!
 
 ### OpenPorts:
-5901 - VNC
-6901 - noVNC
+
+- 5901 - VNC
+- 6901 - noVNC
 
 ## Basic Run:
 

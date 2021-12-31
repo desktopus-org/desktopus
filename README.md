@@ -101,12 +101,12 @@ It suports:
 > Note: This will create a socket file `/tmp/pulseaudio.socket` which will be used in the docker container
 > to send audio to the pulseaudio server running in your host machine.
 
-Go to your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
-You can also configure a VNC client and connect to `localhost:5901`
-
 ```
 ./run.sh --audio-video
 ```
+
+Go to your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
+You can also configure a VNC client and connect to `localhost:5901`
 
 ## Default credentials
 

@@ -104,8 +104,8 @@ It suports:
 
 ## Default credentials
 
-Ubuntu user password: userpassword
-VCN Password: vncpassword
+- Ubuntu user password: userpassword
+- VCN Password: vncpassword
 
 ## Change default configurations
 - **Resolution**: If you want to change the default resolution (1920x1080) you can set it by exporting the env variable `RESOLUTION`.

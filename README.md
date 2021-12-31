@@ -15,6 +15,7 @@ What **Desktopus** would try to solve?:
 - Be able to export a workspace and run it on any computer, remote server with Docker installed, or a Kubernetes cluster.
 - Maybe in the long run, create a "DesktopusHub" where people can share their own desktop workspaces. This could be done by sharing their own files which will be basic zip files containing metadata and scripts to build those images (like `.jar`'s of the Java World).
 - Being agnostic of any external service and build images on the first run, to improve security and reduce costs.
+- Have an easy to use webapp to create, run and import/export workspaces.
 
 For example let's suppose that there will be some canonical/axiomatic images like:
 

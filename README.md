@@ -42,7 +42,7 @@ These are the goals of this phase:
     - [ ] Latex/Pandoc writing
     - [ ] Python Data Science
 - [ ] All images should work on linux, and partially (without sound) in Windows and Mac.
-- [ ] Don't use `privileged` mode in Docker.
+- [ ] Don't use `privileged` mode with Docker in Docker.
 
 ## Desktopus RoadMap - Phase 2
 

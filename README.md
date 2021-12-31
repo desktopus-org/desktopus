@@ -1,4 +1,4 @@
-# Desktopus - Portable containerized desktop workspaces.
+# Desktopus - Portable desktop workspaces using Docker containers.
 
 > Note: Don't hype. This is a software I want to do on my spare time to solve my **own** problems. It could end being good, it could end without an end, or even it could end not being a viable project.
 

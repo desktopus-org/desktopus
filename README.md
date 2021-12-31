@@ -93,7 +93,6 @@ _Tested in Ubuntu and Manjaro_
 
 It suports:
 - Audio
-- Video HW acceleration
 - Docker in Docker
 
 > Note: This will create a socket file `/tmp/pulseaudio.socket` which will be used in the docker container

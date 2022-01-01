@@ -1,9 +1,6 @@
 FROM ubuntu:20.04
 
 # Installation for docker in docker
-ENV DOCKER_CHANNEL=stable
-ARG DOCKER_VERSION=20.10.12
-ARG DOCKER_COMPOSE_VERSION=1.29.2
 ARG NOVNC_VERSION=1.3.0
 
 ENV HOME=/home/userdocker \
@@ -18,20 +15,27 @@ ENV HOME=/home/userdocker \
     DISPLAY=:1 \
     USER_PASSWORD=userpassword
 
-# Installation and supervisor scripts
-ADD installation.sh /opt/installation-scripts/
+# Base installation
+COPY base_installation.sh /opt/base-installation-scripts/
+ADD modules-installation /opt/modules-installation/ 
 ADD supervisor-scripts /opt/supervisor-scripts/
 
 # XFCE configuration files
 ADD ./config-files/ $HOME/
 
 RUN chmod -R +x /opt/supervisor-scripts/ \ 
-    && chmod -R +x /opt/installation-scripts/
+    && chmod -R +x /opt/base-installation-scripts/ \
+    && chmod -R +x /opt/modules-installation/
 
 # Add userdocker user
 RUN useradd -m userdocker -s /bin/bash && adduser userdocker sudo
 
-RUN cd /opt/installation-scripts && ./installation.sh
+RUN cd /opt/base-installation-scripts/ && ./base_installation.sh
+RUN cd /opt/modules-installation/ && \
+    count=`ls -1 *.sh 2>/dev/null | wc -l` && \
+    if [ "${count}" != 0 ]; then \
+        for MODULE_SCRIPT in *.sh; do bash "$MODULE_SCRIPT"; done \
+    fi
 
 # Add supervisor config
 COPY supervisor/ /etc/supervisor/conf.d/

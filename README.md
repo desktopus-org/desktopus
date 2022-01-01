@@ -59,36 +59,60 @@ These are the goals of this phase:
 
 # Desktopus PoC (Currently in phase 1)
 
-At the moment there is only an Ubuntu XFCE docker image created that can be used. You can check on the next section how to build it and run it.
+At the moment there is only an _Ubuntu 20.04_ image with XFCE as a base image. Also some modules are created in `/src/modules`.
+Each module represents a software to be installed on the `base` image. All workspaces are defined in the `workspaces.csv` format. 
 
-This image has installed:
-- Docker
-- Firefox
-- Chrome
+Each module has three kind of files:
 
-Future images will be created on top of this image.
-## Build
+- `installation.sh`: This is how the module will be installed in the workspace.
+- `file-desktop.desktop`: Definition of the Desktop file for the module if needed.
+- `supervisor.conf`: If the module is a daemon, it is necessary to configure its own supervisor config files.
+
+## Current base images and modules:
+
+- Ubuntu:
+    - Versions:
+        - 20.04 with XFCE
+    - Modules:
+        - `docker`
+        - `docker-compose`
+        - `firefox`
+        - `chrome`
+
+## Example workspaces in `workspaces.csv`
+
+|Name|Base|Modules|
+---|---|---|
+|ubuntu-20.04-xfce-firefox-chrome-docker|ubuntu:20.04-xfce|docker:20.10.12,docker-compose:1.29.2,firefox,google-chrome|
+|ubuntu-20.04-xfce-docker|ubuntu:20.04-xfce|docker:20.10.12|
+|ubuntu-20.04-xfce-docker|ubuntu:20.04-xfce|
+
+
+## Generate workspaces
+
+The input file which contains information of workspaces to be generated is in `workspaces.csv`
 
 ```
-./build.sh
+./generate_workspaces.sh
+```
+This will generate two directories:
+- `generated_workspaces/`: Contains a buildeable Docker image with all the modules specified.
+- `generated_workspaces_zips/`: The same as `generated_workspaces` but in zip files
+
+## Basic Build and Run of your workspace:
+
+1. Go to `generated_workspaces` directory and go to your desired workspace.
+2. Execute `create_image.sh` to build the image of the workspace.
+3. Run your workspace:
+
+```
+./run_workspace.sh --basic
 ```
 
-## Ports used:
-
-- 5901 - VNC
-- 6901 - noVNC
-
-## Basic Run:
-
-It supports:
-- Docker in Docker
-
-```
-./run.sh --basic
-```
-
-Go to your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
+In your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
 You can also configure a VNC client and connect to `localhost:5901`
+
+> Note, all the data generated at `/home/userdocker` in the container will be preserved in a volume to persist data. If you want to add more volumes you will need to modify the `run_workspace.sh` script of your workspace.
 
 ## Run with audio(pulseaudio) (Only Linux distributions):
 
@@ -102,12 +126,28 @@ It suports:
 > to send audio to the pulseaudio server running in your host machine.
 
 ```
-./run.sh --audio-video
+./run_workspace.sh --audio
 ```
 
 Go to your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
 You can also configure a VNC client and connect to `localhost:5901`
 
+## Run with Docker in Docker
+
+If you have in your workspace the `docker` module, you will need to run the container as `--privileged`.
+
+> Warning!: Privileged breaks container isolation and it is insecure for production environments.
+> I want to provide Nestybox Sysbox support in the future.
+
+To run on priviled mode, you just need to execute appending `-privileged` at the end of the comand. For example:
+
+```
+./run_workspace.sh --basic-privileged
+```
+or
+```
+./run_workspace.sh --audio-privileged
+```
 ## Default credentials
 
 - Ubuntu user password: userpassword
@@ -123,5 +163,5 @@ Example:
 export RESOLUTION=1280x720
 export VNC_PW=changeme_vnc
 export USER_PASSWORD=changeme_user
-./run.sh --basic
+./run_workspace.sh --basic
 ```

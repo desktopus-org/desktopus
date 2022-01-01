@@ -1,0 +1,4 @@
+Name;Base;Modules
+ubuntu-20.04-xfce-firefox-chrome-docker;ubuntu:20.04-xfce;docker:20.10.12,docker-compose:1.29.2,firefox,google-chrome
+ubuntu-20.04-xfce-docker;ubuntu:20.04-xfce;docker:20.10.12
+ubuntu-20.04-xfce;ubuntu:20.04-xfce;

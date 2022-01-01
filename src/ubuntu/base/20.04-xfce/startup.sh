@@ -20,18 +20,6 @@ chmod 600 $PASSWD_PATH
 INFO "Giving permissions for non root user"
 chown -R userdocker /home/userdocker
 
-INFO "Configuring chrome for docker"
-
-VNC_RES_W=${RESOLUTION%x*}
-VNC_RES_H=${RESOLUTION#*x}
-
-echo "CHROMIUM_FLAGS='--no-sandbox --disable-gpu --user-data-dir --window-size=$VNC_RES_W,$VNC_RES_H --window-position=0,0'" > $HOME/.chromium-browser.init
-
-INFO "Creating docker group and adding userdocker to the group"
-
-groupadd docker
-usermod -aG docker userdocker
-
 INFO "Adding userdocker to audio group"
 usermod -a -G audio userdocker
 

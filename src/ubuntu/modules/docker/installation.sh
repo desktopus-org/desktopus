@@ -34,7 +34,7 @@ rm docker.tgz
 dockerd --version
 docker --version
 
-echo "Creating docker group and adding userdocker to the group"
+echo "Creating docker group and adding desktopus to the group"
 
 groupadd docker
-usermod -aG docker userdocker
+usermod -aG docker desktopus

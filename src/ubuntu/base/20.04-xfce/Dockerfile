@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 # Installation for docker in docker
 ARG NOVNC_VERSION=1.3.0
 
-ENV HOME=/home/userdocker \
+ENV HOME=/home/desktopus \
     TERM=xterm-256color \
     DEBIAN_FRONTEND=noninteractive \
     VNC_COL_DEPTH=24 \
@@ -17,20 +17,21 @@ ENV HOME=/home/userdocker \
 
 # Base installation
 COPY base_installation.sh /opt/base-installation-scripts/
-ADD modules-installation /opt/modules-installation/ 
 ADD supervisor-scripts /opt/supervisor-scripts/
 
 # XFCE configuration files
 ADD ./config-files/ $HOME/
 
 RUN chmod -R +x /opt/supervisor-scripts/ \ 
-    && chmod -R +x /opt/base-installation-scripts/ \
-    && chmod -R +x /opt/modules-installation/
+    && chmod -R +x /opt/base-installation-scripts/
 
-# Add userdocker user
-RUN useradd -m userdocker -s /bin/bash && adduser userdocker sudo
+# Add desktopus user
+RUN useradd -m desktopus -s /bin/bash && adduser desktopus sudo
 
 RUN cd /opt/base-installation-scripts/ && ./base_installation.sh
+ADD modules-installation /opt/modules-installation/
+RUN chmod -R +x /opt/modules-installation/
+
 RUN cd /opt/modules-installation/ && \
     count=`ls -1 *.sh 2>/dev/null | wc -l` && \
     if [ "${count}" != 0 ]; then \
@@ -42,5 +43,6 @@ COPY supervisor/ /etc/supervisor/conf.d/
 COPY startup.sh /usr/local/bin/
 COPY logger.sh /opt/bash-utils/logger.sh
 RUN chmod +x /usr/local/bin/startup.sh
+RUN chown desktopus:desktopus /home/desktopus
 
 ENTRYPOINT ["startup.sh"]

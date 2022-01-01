@@ -78,6 +78,7 @@ Each module has three kind of files:
         - `docker-compose`
         - `firefox`
         - `chrome`
+        - `oh-my-zsh`
 
 ## Example workspaces in `workspaces.csv`
 
@@ -112,7 +113,7 @@ This will generate two directories:
 In your browser and go to: `http://localhost:6901/vnc.html` and log in to noVNC.
 You can also configure a VNC client and connect to `localhost:5901`
 
-> Note, all the data generated at `/home/userdocker/shared-home` in the container will be preserved in your workspace directory at `shared-home` to persist your data. If you want to add more volumes you will need to modify the `run_workspace.sh` script of your workspace.
+> Note, all the data generated at `/home/desktopus/shared-home` in the container will be preserved in your workspace directory at `shared-home` to persist your data. If you want to add more volumes you will need to modify the `run_workspace.sh` script of your workspace.
 
 ## Run with audio(pulseaudio) (Only Linux distributions):
 

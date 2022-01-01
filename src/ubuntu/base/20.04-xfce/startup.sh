@@ -1,8 +1,8 @@
 #!/bin/bash
 source /opt/bash-utils/logger.sh
 
-# Change password of userdocker
-echo "userdocker:${USER_PASSWORD}" | chpasswd
+# Change password of desktopus
+echo "desktopus:${USER_PASSWORD}" | chpasswd
 
 INFO "Configuring VNC Password"
 
@@ -18,14 +18,14 @@ echo "$VNC_PW" | vncpasswd -f >> $PASSWD_PATH
 chmod 600 $PASSWD_PATH
 
 INFO "Giving permissions for non root user"
-chown -R userdocker /home/userdocker
+chown -R desktopus /home/desktopus
 
-INFO "Adding userdocker to audio group"
-usermod -a -G audio userdocker
+INFO "Adding desktopus to audio group"
+usermod -a -G audio desktopus
 
-INFO "Adding userdocker to video and render group for hw acceleration"
-usermod -a -G video userdocker
+INFO "Adding desktopus to video and render group for hw acceleration"
+usermod -a -G video desktopus
 groupadd render
-usermod -a -G render userdocker
+usermod -a -G render desktopus
 
 /usr/bin/supervisord -n

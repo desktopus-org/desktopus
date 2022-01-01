@@ -35,7 +35,7 @@ function run_basic() {
         --env USER_PASSWORD="${USER_PASSWORD:-userpassword}" \
         --env VNC_PW="${VNC_PW:-vncpassword}" \
         --env TZ="${TIMEZONE}" \
-        --volume "$(pwd)"/shared-home:/home/userdocker/shared-home \
+        --volume "$(pwd)"/shared-home:/home/desktopus/shared-home \
         __workspace_name__
 }
 
@@ -59,7 +59,7 @@ function run_audio() {
     --env TZ="${TIMEZONE}" \
     --volume /tmp/pulseaudio.socket:/tmp/pulseaudio.socket \
     --volume /tmp/pulseaudio.client.conf:/etc/pulse/client.conf \
-    --volume "$(pwd)"/shared-home:/home/userdocker/shared-home \
+    --volume "$(pwd)"/shared-home:/home/desktopus/shared-home \
     __workspace_name__
 }
 

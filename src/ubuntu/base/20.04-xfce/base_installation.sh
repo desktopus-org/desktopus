@@ -59,7 +59,7 @@ unzip noVNC.zip
 rm noVNC.zip
 mv novnc-noVNC-* serve
 popd
-chown -R userdocker:userdocker /opt/noVNC
+chown -R desktopus:desktopus /opt/noVNC
 # Install websockify
 echo "noVNC step 2: Install websockify"
 pushd /opt

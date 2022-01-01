@@ -96,7 +96,7 @@ The input file which contains information of workspaces to be generated is in `w
 ./generate_workspaces.sh
 ```
 This will generate two directories:
-- `generated_workspaces/`: Contains a buildeable Docker image with all the modules specified.
+- `generated_workspaces/`: Contains a buildable Docker image with all the modules specified.
 - `generated_workspaces_zips/`: The same as `generated_workspaces` but in zip files
 
 ## Basic Build and Run of your workspace:

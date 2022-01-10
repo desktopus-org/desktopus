@@ -19,9 +19,10 @@ What **Desktopus** would try to solve?:
 
 For example let's suppose that there will be some canonical/axiomatic images like:
 
-- `desktopus/ubuntu-base-xfce`
+- `desktopus/ubuntu-xfce`
 - `desktopus/centos-xfce`
 - `desktopus/alpine-xfce`
+...
 
 The idea is to let the people to extend those images by using the standard Dockerfile format, but with some rules so the images can be reused.
 

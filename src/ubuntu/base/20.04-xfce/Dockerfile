@@ -34,8 +34,9 @@ RUN chmod -R +x /opt/modules-installation/
 
 RUN cd /opt/modules-installation/ && \
     count=`ls -1 *.sh 2>/dev/null | wc -l` && \
+    # Install all modules
     if [ "${count}" != 0 ]; then \
-        for MODULE_SCRIPT in *.sh; do bash "$MODULE_SCRIPT"; done \
+        for MODULE_SCRIPT in *.sh; do bash "$MODULE_SCRIPT" || { echo "module installation $MODULE_SCRIPT failed" ; exit 1; }; done \
     fi
 
 # Add supervisor config

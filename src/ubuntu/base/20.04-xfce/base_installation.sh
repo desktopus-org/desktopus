@@ -7,11 +7,9 @@ apt-get update
 apt-get install -y \
 	software-properties-common \
  	ca-certificates \
-	openssh-client \
 	vim \
 	wget \
 	curl \
-	iptables \
 	net-tools \
 	locales \
 	bzip2 \
@@ -19,8 +17,6 @@ apt-get install -y \
 	git \
 	supervisor \
 	nano \
-	geany \
-	terminator \
 	sudo \
 	python3 \
 	python3-setuptools \

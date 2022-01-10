@@ -9,6 +9,9 @@ unset DBUS_SESSION_BUS_ADDRESS
 exec startxfce4
 EOF
 
+rm "$HOME"/.vnc/*.pid || true
+rm "$HOME"/.vnc/*.log || true
+
 # Setting pidfile + command to execute
 pidfile="$HOME/.vnc/*:1.pid"
 command="vncserver -depth $VNC_COL_DEPTH -geometry $RESOLUTION -localhost no"

@@ -1,4 +1,8 @@
 #!/bin/bash
+set -eu -o pipefail
+LATEST_DOCKER_VERSION=$(curl -sSL https://api.github.com/repos/docker/cli/tags | grep name | head -n1 | cut -d'"' -f4)
+
+
 arch="$(uname --m)"
 case "$arch" in
 	# amd64
@@ -19,8 +23,8 @@ case "$arch" in
 	;;
 esac
 
-if ! wget -O docker.tgz "https://download.docker.com/linux/static/stable/${dockerArch}/docker-__version__.tgz"; then
-	echo >&2 "error: failed to download 'docker-__version__' from 'stable' for '${dockerArch}'"
+if ! wget -O docker.tgz "https://download.docker.com/linux/static/stable/${dockerArch}/docker-${LATEST_DOCKER_VERSION//v}.tgz"; then
+	echo >&2 "error: failed to download 'docker-${LATEST_DOCKER_VERSION//v}' from 'stable' for '${dockerArch}'"
 	exit 1
 fi
 

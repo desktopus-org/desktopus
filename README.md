@@ -60,7 +60,7 @@ These are the goals of this phase:
 # Desktopus PoC (Currently in phase 1)
 
 At the moment there is only an _Ubuntu 20.04_ image with XFCE as a base image. Also some modules are created in `/src/modules`.
-Each module represents a software to be installed on the `base` image. All workspaces are defined in the `workspaces.csv` format. 
+Each module represents a software to be installed on the `base` image. All workspaces are defined in the `workspaces` folder. 
 
 Each module has three kind of files:
 
@@ -79,19 +79,20 @@ Each module has three kind of files:
         - `firefox`
         - `chrome`
         - `oh-my-zsh`
+        - `terminator`
 
-## Example workspaces in `workspaces.csv`
+## Example workspaces in `workspaces` directory
 
 |Name|Base|Modules|
 ---|---|---|
-|ubuntu-20.04-xfce-firefox-chrome-docker|ubuntu:20.04-xfce|docker:20.10.12,docker-compose:1.29.2,firefox,google-chrome|
-|ubuntu-20.04-xfce-docker|ubuntu:20.04-xfce|docker:20.10.12|
-|ubuntu-20.04-xfce-docker|ubuntu:20.04-xfce|
+|ubuntu-basic-tools|ubuntu:20.04-xfce|docker,docker-compose,firefox,google-chrome,oh-my-zsh,terminator|
+|ubuntu-docker|ubuntu:20.04-xfce|docker|
+|ubuntu-minimal|ubuntu:20.04-xfce|
 
 
 ## Generate workspaces
 
-The input file which contains information of workspaces to be generated is in `workspaces.csv`
+The input file which contains information of workspaces to be generated is in `workspaces` directory. Each workspace is defined a different `<workspace_name>.info` file.
 
 ```
 ./generate_workspaces.sh

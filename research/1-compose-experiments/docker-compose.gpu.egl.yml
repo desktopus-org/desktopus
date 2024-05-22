@@ -1,0 +1,19 @@
+services:
+  desktopus-ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    shm_size: 1024m
+    environment:
+      - VNC_PW=password
+      - VNC_RESOLUTION=1920x1080
+      - RUN_LEGACY_VNC=true
+      - KASM_EGL_CARD=/dev/dri/card0
+      - KASM_RENDERD=/dev/dri/renderD128
+      - HOST_DISPLAY=0
+    volumes:
+      - /tmp/.X11-unix/X0:/tmp/.X11-unix/X0
+    devices:
+      - /dev/dri/card0:/dev/dri/card0:rwm
+      - /dev/dri/renderD128:/dev/dri/renderD128:rwm
+    container_name: desktopus-ubuntu

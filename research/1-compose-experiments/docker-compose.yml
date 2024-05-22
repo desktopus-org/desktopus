@@ -1,0 +1,16 @@
+services:
+  desktopus-ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    shm_size: 1024m
+    ports:
+      - 5900:5900
+    environment:
+      - VNC_PW=password
+      - VNC_RESOLUTION=1920x1080
+      - RUN_LEGACY_VNC=true
+      - HOST_DISPLAY=0
+    volumes:
+      - /tmp/.X11-unix/X0:/tmp/.X11-unix/X0
+    container_name: desktopus-ubuntu

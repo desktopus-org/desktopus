@@ -1,0 +1,41 @@
+--- vnc_startup.sh	2024-05-04 04:39:44.500471835 +0200
++++ vnc_startup_new.sh	2024-05-04 06:38:55.805615576 +0200
+@@ -147,6 +147,12 @@
+ function start_kasmvnc (){
+ 	log "Starting KasmVNC"
+ 
++    # Give permissions for /dev/dri
++    if [ -e /dev/dri ]; then
++        log "Setting permissions for /dev/dri/*"
++        sudo /dockerstartup/root/permissions_gpu.sh
++    fi
++
+ 	DISPLAY_NUM=$(echo $DISPLAY | grep -Po ':\d+')
+ 
+ 	if [[ $STARTUP_COMPLETE == 0 ]]; then
+@@ -187,6 +193,11 @@
+ 	  echo -e "\n------------------ Started Websockify  ----------------------------"
+ 	  echo "Websockify PID: ${KASM_PROCS['kasmvnc']}";
+ 	fi
++
++	if [[ "${RUN_LEGACY_VNC}" == "true" ]]; then
++		x11vnc -repeat -forever -loop -display "${DISPLAY}" &> "$HOME/.vnc/x11vnc.log" &
++	fi
++
+ }
+ 
+ function start_window_manager (){
+@@ -205,6 +216,13 @@
+ 			fi
+ 		fi
+ 		KASM_PROCS['window_manager']=$!
++
++		if [[ "${RUN_LEGACY_VNC}" == "true" ]]; then
++			sleep 5
++			# Change resolution
++			DISPLAY=:0 vncviewer localhost:5900 &
++			xrandr -s $VNC_RESOLUTION
++		fi
+ 	else
+ 		echo "Skipping XFCE Startup"
+ 	fi

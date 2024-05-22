@@ -1,0 +1,59 @@
+FROM kasmweb/core-ubuntu-jammy:1.15.0-rolling as patches
+
+COPY patches /patches
+ENV PATCHES="/dockerstartup/vnc_startup.sh,/patches/vnc_startup.sh.patch"
+
+USER root
+RUN \
+  for PATCH in $PATCHES; do \
+    ORIG=$(echo $PATCH | cut -d, -f1) && \
+    PATCH=$(echo $PATCH | cut -d, -f2) && \
+    patch $ORIG $PATCH || exit 1; \
+  done
+
+FROM kasmweb/core-ubuntu-jammy:1.15.0-rolling
+
+# If you want to set a root password, set it as an argument
+ARG ROOT_PASSWORD
+
+USER root
+
+# Copy patched files
+RUN rm -rf /dockerstartup
+COPY --from=patches /dockerstartup/ /dockerstartup/
+
+ENV RUN_LEGACY_VNC false
+
+# Desktopus dependencies
+RUN apt-get update -y && \
+    apt-get install -y \
+    x11vnc \
+    tigervnc-viewer
+
+# Create desktopus user
+RUN \
+  usermod -l desktopus kasm-user && \
+  groupmod -n desktopus kasm-user && \
+  mkdir -p /home/desktopus && \
+  chown -R 1000:0 /home/desktopus
+
+# Special permissions for root scripts
+COPY src/dockerstartup/root /dockerstartup/root
+RUN chown root /dockerstartup/root/ && \
+  chmod 755 /dockerstartup/root/ && \
+  for SCRIPT in /dockerstartup/root/*; do \
+    chown root $SCRIPT && \
+    chmod 700 $SCRIPT; \
+    echo "desktopus ALL=(ALL) NOPASSWD: $SCRIPT" >> /etc/sudoers; \
+  done
+
+# Allow root to desktopus or set password
+RUN \
+  if [ -z "$ROOT_PASSWORD" ]; then \
+    echo "desktopus ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers; \
+  else \
+    echo "root:$ROOT_PASSWORD" | chpasswd; \
+  fi && \
+  chown -R 1000:0 /home/desktopus
+
+USER 1000

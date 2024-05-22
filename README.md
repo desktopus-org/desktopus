@@ -1,5 +1,6 @@
-<img src="https://raw.githubusercontent.com/desktopus-org/.github/main/design/logo_rounded.png" width="200" height="200" style="display: block; margin: 0 auto; padding-bottom: 25px;" alt="Desktopus logo">
-
+<div align="center">
+<img src="https://raw.githubusercontent.com/desktopus-org/.github/main/design/logo_rounded.png" width="200" height="200">
+</div>
 <h1 align="center">Desktopus</h1>
 
 > [!NOTE]

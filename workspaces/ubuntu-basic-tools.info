@@ -1,2 +1,0 @@
-Base=ubuntu:20.04-xfce
-Modules=docker,docker-compose,firefox,google-chrome,terminator,oh-my-zsh

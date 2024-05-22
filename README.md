@@ -38,6 +38,7 @@ Work in progress 👨🏻‍💻
 
 - [ ] Desktopus CLI to build and run desktopus workspaces.
 - [ ] Desktopus Server used by the CLI to build and run desktopus workspaces.
+- [ ] Installer. Only for Linux at the moment.
 - [ ] Minimal desktopus yaml specifications:
     - [ ] `desktopus.yaml` specification, which can define how to build images and how to run a desktopus workspace.
     - [ ] `desktopus.profile.yaml` specification, which can define multiple ways to run a desktopus workspace. (with gpu, without gpu, etc)

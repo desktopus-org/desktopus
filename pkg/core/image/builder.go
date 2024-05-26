@@ -14,7 +14,7 @@ import (
 
 // Desktopus templates repository
 // This is the default repository where to find the templates
-var DesktopusTemplatesRepo = "https://raw.githubusercontent.com/desktopus-org/desktopus/base-templates"
+var DesktopusTemplatesRepo = "https://raw.githubusercontent.com/desktopus-org/desktopus/core-templates"
 
 // ImageBuilder defines a common interface for all image specifications
 type ImageBuilder interface {

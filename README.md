@@ -37,16 +37,15 @@ Work in progress 👨🏻‍💻
 #### September - December 2024 v0.1.0
 
 - [ ] Desktopus CLI to build and run desktopus workspaces.
-- [ ] Desktopus Server used by the CLI to build and run desktopus workspaces.
 - [ ] Installer. Only for Linux at the moment.
 - [ ] Minimal desktopus yaml specifications:
-    - [ ] `desktopus.yaml` specification, which can define how to build images and how to run a desktopus workspace.
-    - [ ] `desktopus.profile.yaml` specification, which can define multiple ways to run a desktopus workspace. (with gpu, without gpu, etc)
-    - [ ] `desktopus.vars.yaml` specification, which can define variables to be used in desktopus.yaml
+    - [ ] `.desktopus.yaml` specification, which can define how to build images and how to run a desktopus workspace.
+    - [ ] `.desktopus.run.yaml` specification, which can define multiple ways to run a desktopus workspace. (with gpu, without gpu, etc)
 - [ ] Support only Ubuntu with XFCE as a base image. (More will be added in the future)
 - [ ] Modules to install software which requires custom configurations.
 - [ ] Allow users to define custom modules, and add custom config files, userdata at `desktopus.yaml` level.
 - [ ] Webpage with documentation and examples.
+- [ ] Allow access workspaces through Web with [KasmVNC](https://kasmweb.com/kasmvnc) and natively through [Moonlight](https://moonlight-stream.org/).
 
 #### January - March 2025 v0.2.0
 

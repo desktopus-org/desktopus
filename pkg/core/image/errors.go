@@ -2,37 +2,46 @@ package image
 
 import "desktopus/pkg/core/utils"
 
-// Specific error types
+// Specific error types embedding DesktopusError
 type ErrCoreTemplateReadingIndexMeta struct {
-	utils.DesktopusError
+	*utils.DesktopusError
+}
+
+func (e *ErrCoreTemplateReadingIndexMeta) Error() string {
+	return e.DesktopusError.Error()
 }
 
 type ErrCoreTemplateReadingCoreMeta struct {
-	utils.DesktopusError
+	*utils.DesktopusError
+}
+
+func (e *ErrCoreTemplateReadingCoreMeta) Error() string {
+	return e.DesktopusError.Error()
 }
 
 type ErrCoreTemplateOSNotFound struct {
-	utils.DesktopusError
+	*utils.DesktopusError
+}
+
+func (e *ErrCoreTemplateOSNotFound) Error() string {
+	return e.DesktopusError.Error()
 }
 
 // Functions to create specific errors with parameters
 func newErrCoreTemplateReadingIndexMeta(errMessage string) error {
-	return &utils.DesktopusError{
-		Message: "error reading core template index metadata: %s",
-		Params:  []interface{}{errMessage},
+	return &ErrCoreTemplateReadingIndexMeta{
+		DesktopusError: utils.NewDesktopusError("error reading core templates index metadata: %s", errMessage),
 	}
 }
 
 func newErrCoreTemplateReadingCoreMeta(os string, errMessage string) error {
-	return &utils.DesktopusError{
-		Message: "error reading OS %s metadata: %s",
-		Params:  []interface{}{os, errMessage},
+	return &ErrCoreTemplateReadingCoreMeta{
+		DesktopusError: utils.NewDesktopusError("error reading OS %s metadata: %s", os, errMessage),
 	}
 }
 
 func newErrCoreTemplateOSNotFound(name string) error {
-	return &utils.DesktopusError{
-		Message: "error: OS %s not found in core templates",
-		Params:  []interface{}{name},
+	return &ErrCoreTemplateOSNotFound{
+		DesktopusError: utils.NewDesktopusError("error: OS %s not found in core templates", name),
 	}
 }

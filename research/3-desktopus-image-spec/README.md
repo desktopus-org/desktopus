@@ -28,24 +28,22 @@ The `parameters` section defines a list of configurable parameters that can be u
 #### Example Parameters:
 
 ```yaml
-parameters:
-  - name: username
+envs:
+  - name: USERNAME
     type: string
-    description: The username for the user account.
     default: user
-  - name: password
+  - name: PASSWORD
     type: string
-    description: The password for the user account.
     default: password
-  - name: font
+  - name: VSCODE_FONT
     type: string
-    description: The font family to use in the VS Code editor.
     default: Fira Code
-  - name: fontSize
+  - name: VSCODE_FONT_SIZE
     type: number
-    description: The font size to use in the VS Code editor.
-    required: true
+    default: 14
 ```
+
+The environment variables defined in the `envs` section are resolved on startup and checked, so the container can't start if they are not defined or values are not valid.
 
 ### Modules
 
@@ -103,12 +101,9 @@ files:
 
 #### Startup Script
 
-The `startup_script` subsection specifies a script to be executed at startup. The script can include commands to install software or configure the environment.
+The `startup_script` subsection specifies a script to be executed at startup. The script can include commands to install software or configure the environment. Executes by default as root to allow for system-wide changes.
 
 - **content**: The script content.
-- **mode**: File permissions (e.g., `0755`).
-- **owner**: Owner of the script file.
-- **group**: Group of the script file.
 
 ##### Example Startup Script:
 
@@ -134,17 +129,17 @@ Below is a complete example of a Desktopus configuration file:
 
 desktopusVersion: v0.1.0
 os: ubuntu-jammy
-parameters:
-  - name: username
+envs:
+  - name: USERNAME
     type: string
     default: user
-  - name: password
+  - name: PASSWORD
     type: string
     default: password
-  - name: font
+  - name: VSCODE_FONT
     type: string
     default: Fira Code
-  - name: fontSize
+  - name: VSCODE_FONT_SIZE
     type: number
     default: 14
 modules:
@@ -181,7 +176,4 @@ meta:
         # Install vscode extensions
         code --install-extension ms-python.python
         code --install-extension ms-vscode.cpptools
-      mode: '0755'
-      owner: ${username}
-      group: ${username}
 ```

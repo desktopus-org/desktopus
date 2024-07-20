@@ -55,42 +55,42 @@ type coreTemplateOS struct {
 	modules       map[string]string
 }
 
-func newCoreTemplateOS(name string) (*coreTemplateOS, error) {
+func newCoreTemplateOS(osName string) (*coreTemplateOS, error) {
 	// Check if meta.yaml of the OS exists
 	var metaIndex metaCoreTemplateIndex
 	metaIndexFile, err := coreTemplatesFS.ReadFile("core-templates/meta.yaml")
 	if err != nil {
-		return nil, fmt.Errorf("error reading core templates index metadata: %s", err)
+		return nil, newErrCoreTemplateReadingIndexMeta(err.Error())
 	}
 	yaml.Unmarshal(metaIndexFile, &metaIndex)
 	if metaIndex.MetaType != "core_index" {
-		return nil, fmt.Errorf("error reading core templates index metadata: invalid type")
+		return nil, newErrCoreTemplateReadingIndexMeta("invalid type")
 	}
 
 	// Check if the OS exists in the index
 	for index, os := range metaIndex.OsImages {
-		if os == name {
+		if os == osName {
 			break
 		}
 		if index == len(metaIndex.OsImages)-1 {
-			return nil, fmt.Errorf("OS %s not found in core templates", name)
+			return nil, newErrCoreTemplateOSNotFound(osName)
 		}
 	}
 
 	// Check if the OS metadata exists
 	var metaOS metaCoreTemplateOS
-	metaOSFile, err := coreTemplatesFS.ReadFile(fmt.Sprintf("core-templates/os/%s/meta.yaml", name))
+	metaOSFile, err := coreTemplatesFS.ReadFile(fmt.Sprintf("core-templates/os/%s/meta.yaml", osName))
 	if err != nil {
-		return nil, fmt.Errorf("error reading core templates metadata: %s", err)
+		return nil, newErrCoreTemplateReadingCoreMeta(osName, err.Error())
 	}
 	yaml.Unmarshal(metaOSFile, &metaOS)
 	if metaOS.MetaType != "core_os" {
-		return nil, fmt.Errorf("error reading core templates metadata: invalid type")
+		return nil, newErrCoreTemplateReadingCoreMeta(osName, "invalid type: "+metaOS.MetaType)
 	}
 
 	// Create the coreTemplateOS struct
 	commonModulesBaseDir := "core-templates/common/modules/"
-	baseDir := "core-templates/os/" + name + "/"
+	baseDir := "core-templates/os/" + osName + "/"
 	coreOS := coreTemplateOS{
 		name: metaOS.Name,
 	}

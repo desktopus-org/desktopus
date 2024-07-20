@@ -1,32 +1,38 @@
 package image
 
-import (
-	"fmt"
-)
+import "desktopus/pkg/core/utils"
 
-// BaseError is the base struct for all custom errors
-type BaseError struct {
-	Message string
-	Params  []interface{}
+// Specific error types
+type ErrCoreTemplateReadingIndexMeta struct {
+	utils.DesktopusError
 }
 
-// Error implements the error interface for BaseError
-func (e *BaseError) Error() string {
-	return fmt.Sprintf(e.Message, e.Params...)
+type ErrCoreTemplateReadingCoreMeta struct {
+	utils.DesktopusError
 }
 
-// // Specific error types
-// type ErrBuildManifestNotSpecified struct {
-// 	BaseError
-// }
+type ErrCoreTemplateOSNotFound struct {
+	utils.DesktopusError
+}
 
-// // Functions to create specific errors with parameters
+// Functions to create specific errors with parameters
+func newErrCoreTemplateReadingIndexMeta(errMessage string) error {
+	return &utils.DesktopusError{
+		Message: "error reading core template index metadata: %s",
+		Params:  []interface{}{errMessage},
+	}
+}
 
-// func NewErrBuildManifestNotSpecified() error {
-// 	return &ErrBuildManifestNotSpecified{
-// 		BaseError: BaseError{
-// 			Message: "manifest not specified",
-// 			Params:  []interface{}{},
-// 		},
-// 	}
-// }
+func newErrCoreTemplateReadingCoreMeta(os string, errMessage string) error {
+	return &utils.DesktopusError{
+		Message: "error reading OS %s metadata: %s",
+		Params:  []interface{}{os, errMessage},
+	}
+}
+
+func newErrCoreTemplateOSNotFound(name string) error {
+	return &utils.DesktopusError{
+		Message: "error: OS %s not found in core templates",
+		Params:  []interface{}{name},
+	}
+}

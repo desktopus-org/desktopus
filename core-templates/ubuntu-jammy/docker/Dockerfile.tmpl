@@ -44,7 +44,7 @@ RUN chown root /dockerstartup/root/ && \
     echo "desktopus ALL=(ALL) NOPASSWD: $SCRIPT" >> /etc/sudoers; \
   done
 
-# Allow root to desktopus or set password
+# Add desktopus to sudoers
 RUN \
   echo "desktopus ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers; \
   chown -R 1000:0 /home/desktopus

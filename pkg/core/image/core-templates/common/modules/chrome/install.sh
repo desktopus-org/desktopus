@@ -8,7 +8,7 @@ ARCH=$(arch | sed 's/aarch64/arm64/g' | sed 's/x86_64/amd64/g')
 if [ "$ARCH" == "arm64" ] ; then
   echo "Chrome not supported on arm64, skipping Chrome installation"
   exit 0
-fi	
+fi
 
 if [[ "${DISTRO}" == @(centos|oracle8|rockylinux9|rockylinux8|oracle9|almalinux9|almalinux8) ]]; then
   if [ ! -z "${CHROME_VERSION}" ]; then

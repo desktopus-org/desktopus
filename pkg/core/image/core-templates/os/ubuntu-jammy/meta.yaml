@@ -1,0 +1,11 @@
+type: core_os
+name: ubuntu-jammy
+root_scripts:
+  - docker/root_scripts/permissions_gpu.sh
+patches:
+  - docker/patches/vnc_startup.patch
+dockerfile: docker/Dockerfile.tmpl
+common_modules:
+  - chrome
+modules:
+  - steam

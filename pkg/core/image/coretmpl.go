@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//go:embed all:core-templates/*
+//go:embed all:core_templates/*
 var coreTemplatesFS embed.FS
 
 // CoreTemplateIndex defines all the metadata related with
@@ -58,7 +58,7 @@ type coreTemplateOS struct {
 func newCoreTemplateOS(osName string) (*coreTemplateOS, error) {
 	// Check if meta.yaml of the OS exists
 	var metaIndex metaCoreTemplateIndex
-	metaIndexFile, err := coreTemplatesFS.ReadFile("core-templates/meta.yaml")
+	metaIndexFile, err := coreTemplatesFS.ReadFile("core_templates/meta.yaml")
 	if err != nil {
 		return nil, newErrCoreTemplateReadingIndexMeta(err.Error())
 	}
@@ -79,7 +79,7 @@ func newCoreTemplateOS(osName string) (*coreTemplateOS, error) {
 
 	// Check if the OS metadata exists
 	var metaOS metaCoreTemplateOS
-	metaOSFile, err := coreTemplatesFS.ReadFile(fmt.Sprintf("core-templates/os/%s/meta.yaml", osName))
+	metaOSFile, err := coreTemplatesFS.ReadFile(fmt.Sprintf("core_templates/os/%s/meta.yaml", osName))
 	if err != nil {
 		return nil, newErrCoreTemplateReadingCoreMeta(osName, err.Error())
 	}
@@ -89,8 +89,8 @@ func newCoreTemplateOS(osName string) (*coreTemplateOS, error) {
 	}
 
 	// Create the coreTemplateOS struct
-	commonModulesBaseDir := "core-templates/common/modules/"
-	baseDir := "core-templates/os/" + osName + "/"
+	commonModulesBaseDir := "core_templates/common/modules/"
+	baseDir := "core_templates/os/" + osName + "/"
 	coreOS := coreTemplateOS{
 		name: metaOS.Name,
 	}

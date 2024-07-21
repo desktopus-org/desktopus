@@ -8,9 +8,10 @@ Startup scripts, file content and parameters are always interpreted when running
 
 ### Header
 
+- **type**: Specifies the type of the configuration file. For Desktopus image files, this should be set to `desktopus-image`.
+- **specVersion**: Specifies the version of the Desktopus image file specification used in the file.
 - **desktopusVersion**: Specifies the version of the Desktopus version used to build the Desktopus image.
   - Example: `v0.1.0`
-
 - **os**: Indicates the target operating system for the desktopus image.
   - Example: `ubuntu-jammy`
 
@@ -126,8 +127,8 @@ Below is a complete example of a Desktopus configuration file:
 
 ```yaml
 # Desktopus file YAML spec
-
-desktopusVersion: v0.1.0
+type: desktopus-image
+specVersion: v1alpha1
 os: ubuntu-jammy
 envs:
   - name: USERNAME

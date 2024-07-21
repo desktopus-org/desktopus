@@ -1,0 +1,105 @@
+{
+    "title": "Desktopus Image Manifest Schema",
+    "type": "object",
+    "properties": {
+        "type": {
+            "type": "string"
+        },
+        "specVersion": {
+            "type": "string",
+            "enum": [
+                "v1alpha1"
+            ]
+        },
+        "os": {
+            "type": "string"
+        },
+        "envs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "string",
+                            "number",
+                            "boolean"
+                        ]
+                    },
+                    "default": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "boolean"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ]
+            }
+        },
+        "modules": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "meta": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "object",
+                    "properties": {
+                        "content": {
+                            "type": "string"
+                        },
+                        "mode": {
+                            "type": "string",
+                            "pattern": "^0[0-7]{3}$"
+                        },
+                        "owner": {
+                            "type": "string"
+                        },
+                        "group": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "content",
+                        "mode",
+                        "owner",
+                        "group"
+                    ]
+                },
+                "startup_script": {
+                    "type": "object",
+                    "properties": {
+                        "content": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "content"
+                    ]
+                }
+            }
+        }
+    },
+    "required": [
+        "type",
+        "specVersion",
+        "os"
+    ]
+}

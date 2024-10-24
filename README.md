@@ -34,7 +34,7 @@ Work in progress 👨🏻‍💻
 
 ### Roadmap
 
-#### September - December 2024 v0.1.0
+#### v0.1.0
 
 - [ ] Desktopus CLI to build and run desktopus workspaces.
 - [ ] Installer. Only for Linux at the moment.
@@ -47,6 +47,6 @@ Work in progress 👨🏻‍💻
 - [ ] Webpage with documentation and examples.
 - [ ] Allow access workspaces through Web with [KasmVNC](https://kasmweb.com/kasmvnc) and natively through [Moonlight](https://moonlight-stream.org/).
 
-#### January - March 2025 v0.2.0
+#### v0.2.0
 
-Coming soon...
+No goals yet

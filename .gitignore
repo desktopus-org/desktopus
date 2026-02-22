@@ -1,0 +1,30 @@
+# Binaries
+bin/
+/desktopus
+*.exe
+
+# Go
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+web/dist/
+web/node_modules/
+
+# Config (local)
+*.local.yaml
+
+# Test
+coverage.out
+coverage.html

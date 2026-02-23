@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/moby/moby/client"
@@ -18,6 +19,7 @@ import (
 
 func TestBuildModule(t *testing.T) {
 	ctx := context.Background()
+	buildLog := os.Getenv("BUILD_LOG") != ""
 
 	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -64,8 +66,11 @@ func TestBuildModule(t *testing.T) {
 					opts := build.Options{Tag: imageTag}
 
 					if err := pipeline.Build(ctx, cfg, ".", opts, &output); err != nil {
-						t.Log(output.String())
+						t.Logf("Build output:\n%s", output.String())
 						t.Fatalf("Build failed: %v", err)
+					}
+					if buildLog {
+						t.Logf("Build output:\n%s", output.String())
 					}
 				})
 			}

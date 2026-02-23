@@ -21,6 +21,14 @@ Run a single test:
 go test ./internal/config/ -run TestValidateDesktop -v
 ```
 
+Integration tests (require Docker):
+```bash
+mage integration                              # All modules × all OS × all desktops
+mage integrationmodule chrome                  # One module, all OS/desktop combos
+mage integrationspecific chrome alpine xfce    # One module + OS + desktop
+BUILD_LOG=1 mage integrationspecific chrome alpine xfce  # With Docker build output
+```
+
 ## Architecture
 
 Desktopus is a Linux desktop-as-code CLI. Users define desktops in `desktopus.yaml`, which gets built into a Docker image (on linuxserver/webtop) and run as a container.
@@ -51,7 +59,7 @@ desktopus.yaml → resolve modules → check compatibility
 
 - **Module resolution**: string `"chrome"` = built-in lookup; path `"./my-module"` = filesystem lookup.
 - **Container labels**: `org.desktopus.managed-by=desktopus` and `org.desktopus.desktop=<name>` used to filter desktopus-managed containers.
-- **Config validation**: OS must be one of `ubuntu|debian|fedora|arch|alpine`. Desktop must be one of `xfce|kde|i3|mate|openbox|icewm`.
+- **Config validation**: Uses a compatibility matrix — each OS (`ubuntu|debian|fedora|arch|alpine|el`) maps to its valid desktops (`i3|kde|mate|xfce`; EL has no KDE).
 - **Version injection**: `main.go` has `var version, commit, buildTime` set via ldflags in `magefile.go`.
 - **Image tagging**: `desktopus/<name>:<tag>` (default tag: `latest`).
 

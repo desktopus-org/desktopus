@@ -187,6 +187,145 @@ func TestGenerateDockerfile(t *testing.T) {
 	if strings.Contains(dockerfile, "custom-cont-init.d") {
 		t.Error("should not have post-run section without post-run scripts")
 	}
+	// Ubuntu should use apt-get and python3-apt
+	if !strings.Contains(dockerfile, "apt-get") {
+		t.Error("ubuntu should use apt-get")
+	}
+	if !strings.Contains(dockerfile, "python3-apt") {
+		t.Error("ubuntu should install python3-apt")
+	}
+}
+
+func TestGenerateDockerfileFedora(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "fedora-desktop",
+		Base: config.BaseSpec{OS: "fedora", Desktop: "xfce"},
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+
+	if !strings.Contains(dockerfile, "FROM lscr.io/linuxserver/webtop:fedora-xfce") {
+		t.Error("missing FROM instruction for fedora")
+	}
+	if !strings.Contains(dockerfile, "dnf install") {
+		t.Error("fedora should use dnf install")
+	}
+	if !strings.Contains(dockerfile, "python3-dnf") {
+		t.Error("fedora should install python3-dnf")
+	}
+	if !strings.Contains(dockerfile, "dnf remove") {
+		t.Error("fedora should use dnf remove for cleanup")
+	}
+	if !strings.Contains(dockerfile, "dnf clean all") {
+		t.Error("fedora should run dnf clean all")
+	}
+}
+
+func TestGenerateDockerfileArch(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "arch-desktop",
+		Base: config.BaseSpec{OS: "arch", Desktop: "i3"},
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+
+	if !strings.Contains(dockerfile, "FROM lscr.io/linuxserver/webtop:arch-i3") {
+		t.Error("missing FROM instruction for arch")
+	}
+	if !strings.Contains(dockerfile, "pacman -Sy --noconfirm") {
+		t.Error("arch should use pacman -Sy --noconfirm")
+	}
+	if !strings.Contains(dockerfile, "pacman -Rns --noconfirm ansible") {
+		t.Error("arch should use pacman -Rns for cleanup")
+	}
+	if !strings.Contains(dockerfile, "pacman -Scc --noconfirm") {
+		t.Error("arch should run pacman -Scc")
+	}
+}
+
+func TestGenerateDockerfileAlpine(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "alpine-desktop",
+		Base: config.BaseSpec{OS: "alpine", Desktop: "xfce"},
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+
+	if !strings.Contains(dockerfile, "FROM lscr.io/linuxserver/webtop:latest") {
+		t.Error("missing FROM instruction for alpine (alpine-xfce resolves to latest)")
+	}
+	if !strings.Contains(dockerfile, "apk add --no-cache") {
+		t.Error("alpine should use apk add --no-cache")
+	}
+	if !strings.Contains(dockerfile, "python3") {
+		t.Error("alpine should install python3")
+	}
+	if !strings.Contains(dockerfile, "apk del ansible") {
+		t.Error("alpine should use apk del for cleanup")
+	}
+}
+
+func TestGenerateDockerfileEL(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "el-desktop",
+		Base: config.BaseSpec{OS: "el", Desktop: "xfce"},
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+
+	if !strings.Contains(dockerfile, "FROM lscr.io/linuxserver/webtop:el-xfce") {
+		t.Error("missing FROM instruction for el")
+	}
+	if !strings.Contains(dockerfile, "dnf install") {
+		t.Error("el should use dnf install")
+	}
+	if !strings.Contains(dockerfile, "python3-dnf") {
+		t.Error("el should install python3-dnf")
+	}
 }
 
 func TestGenerateDockerfileWithPostRun(t *testing.T) {
@@ -287,7 +426,7 @@ func TestGeneratePlaybook(t *testing.T) {
 		{"chrome_channel": "beta"},
 	}
 
-	result, err := generatePlaybook(tmpl, modules, overrides)
+	result, err := generatePlaybook(tmpl, modules, overrides, "ubuntu")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
@@ -323,13 +462,78 @@ func TestGeneratePlaybookDefaults(t *testing.T) {
 	}
 
 	// No overrides
-	result, err := generatePlaybook(tmpl, modules, nil)
+	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
 
 	if !strings.Contains(string(result), "stable") {
 		t.Error("expected default value 'stable'")
+	}
+}
+
+func TestGeneratePlaybookOSSpecificTaskFile(t *testing.T) {
+	tmpl, err := template.New("playbook.yml.tmpl").ParseFS(templatesFS, "templates/playbook.yml.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	modules := []*module.Module{
+		{
+			Name:        "chrome",
+			Path:        "chrome",
+			Builtin:     true,
+			OSTaskFiles: map[string]bool{"ubuntu": true},
+		},
+		{
+			Name:    "vscode",
+			Path:    "vscode",
+			Builtin: true,
+		},
+	}
+
+	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu")
+	if err != nil {
+		t.Fatalf("generatePlaybook: %v", err)
+	}
+
+	playbook := string(result)
+
+	// chrome has ubuntu-specific tasks
+	if !strings.Contains(playbook, "modules/chrome/tasks/ubuntu.yml") {
+		t.Error("expected chrome to use tasks/ubuntu.yml for ubuntu build")
+	}
+	// vscode has no OS-specific tasks, should fall back
+	if !strings.Contains(playbook, "modules/vscode/tasks/main.yml") {
+		t.Error("expected vscode to fall back to tasks/main.yml")
+	}
+}
+
+func TestGeneratePlaybookOSFallback(t *testing.T) {
+	tmpl, err := template.New("playbook.yml.tmpl").ParseFS(templatesFS, "templates/playbook.yml.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	modules := []*module.Module{
+		{
+			Name:        "chrome",
+			Path:        "chrome",
+			Builtin:     true,
+			OSTaskFiles: map[string]bool{"ubuntu": true},
+		},
+	}
+
+	// Building for fedora, but chrome only has ubuntu-specific tasks
+	result, err := generatePlaybook(tmpl, modules, nil, "fedora")
+	if err != nil {
+		t.Fatalf("generatePlaybook: %v", err)
+	}
+
+	playbook := string(result)
+
+	if !strings.Contains(playbook, "modules/chrome/tasks/main.yml") {
+		t.Error("expected chrome to fall back to tasks/main.yml for fedora build")
 	}
 }
 
@@ -515,7 +719,9 @@ func TestStreamBuildOutput(t *testing.T) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	for _, m := range messages {
-		enc.Encode(m)
+		if err := enc.Encode(m); err != nil {
+			t.Fatalf("encode: %v", err)
+		}
 	}
 
 	var output bytes.Buffer
@@ -544,7 +750,9 @@ func TestStreamBuildOutputError(t *testing.T) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	for _, m := range messages {
-		enc.Encode(m)
+		if err := enc.Encode(m); err != nil {
+			t.Fatalf("encode: %v", err)
+		}
 	}
 
 	var output bytes.Buffer

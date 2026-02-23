@@ -19,6 +19,22 @@ func TestImageRefDefault(t *testing.T) {
 	}
 }
 
+func TestImageRefAlpineXfceUsesLatest(t *testing.T) {
+	b := BaseSpec{OS: "alpine", Desktop: "xfce"}
+	want := "lscr.io/linuxserver/webtop:latest"
+	if got := b.ImageRef(); got != want {
+		t.Errorf("ImageRef() = %q, want %q", got, want)
+	}
+}
+
+func TestImageRefAlpineNonXfce(t *testing.T) {
+	b := BaseSpec{OS: "alpine", Desktop: "kde"}
+	want := "lscr.io/linuxserver/webtop:alpine-kde"
+	if got := b.ImageRef(); got != want {
+		t.Errorf("ImageRef() = %q, want %q", got, want)
+	}
+}
+
 func TestImageRefCustomTag(t *testing.T) {
 	b := BaseSpec{OS: "ubuntu", Desktop: "xfce", Tag: "custom-tag"}
 	want := "lscr.io/linuxserver/webtop:custom-tag"
@@ -197,7 +213,7 @@ func TestValidateDesktopInvalidDesktopEnv(t *testing.T) {
 }
 
 func TestValidateDesktopAllValidOS(t *testing.T) {
-	for _, os := range []string{"ubuntu", "debian", "fedora", "arch", "alpine"} {
+	for _, os := range []string{"ubuntu", "debian", "fedora", "arch", "alpine", "el"} {
 		cfg := &DesktopConfig{
 			Name: "test",
 			Base: BaseSpec{OS: os, Desktop: "xfce"},
@@ -209,13 +225,51 @@ func TestValidateDesktopAllValidOS(t *testing.T) {
 }
 
 func TestValidateDesktopAllValidDesktops(t *testing.T) {
-	for _, de := range []string{"xfce", "kde", "i3", "mate", "openbox", "icewm"} {
+	for _, de := range []string{"xfce", "kde", "i3", "mate"} {
 		cfg := &DesktopConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: de},
 		}
 		if err := ValidateDesktop(cfg); err != nil {
 			t.Errorf("desktop %q should be valid: %v", de, err)
+		}
+	}
+}
+
+func TestValidateDesktopIncompatibleCombo(t *testing.T) {
+	cfg := &DesktopConfig{
+		Name: "test",
+		Base: BaseSpec{OS: "el", Desktop: "kde"},
+	}
+	err := ValidateDesktop(cfg)
+	if err == nil {
+		t.Error("expected error for el + kde (incompatible)")
+	}
+	if !strings.Contains(err.Error(), "not available for os") {
+		t.Errorf("expected 'not available for os' error, got: %v", err)
+	}
+}
+
+func TestValidateDesktopELValidCombos(t *testing.T) {
+	for _, de := range []string{"i3", "mate", "xfce"} {
+		cfg := &DesktopConfig{
+			Name: "test",
+			Base: BaseSpec{OS: "el", Desktop: de},
+		}
+		if err := ValidateDesktop(cfg); err != nil {
+			t.Errorf("el + %q should be valid: %v", de, err)
+		}
+	}
+}
+
+func TestValidateDesktopRemovedDesktops(t *testing.T) {
+	for _, de := range []string{"openbox", "icewm"} {
+		cfg := &DesktopConfig{
+			Name: "test",
+			Base: BaseSpec{OS: "ubuntu", Desktop: de},
+		}
+		if err := ValidateDesktop(cfg); err == nil {
+			t.Errorf("desktop %q should be rejected", de)
 		}
 	}
 }

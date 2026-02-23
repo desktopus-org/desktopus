@@ -21,12 +21,21 @@ type BaseSpec struct {
 	Tag     string `yaml:"tag,omitempty"`
 }
 
+// WebtopTag returns the linuxserver/webtop image tag for an OS + desktop pair.
+// The alpine-xfce variant is published as "latest" (no alpine-xfce tag exists).
+func WebtopTag(os, desktop string) string {
+	if os == "alpine" && desktop == "xfce" {
+		return "latest"
+	}
+	return os + "-" + desktop
+}
+
 // ImageRef returns the full Docker image reference
 func (b BaseSpec) ImageRef() string {
 	if b.Tag != "" {
 		return "lscr.io/linuxserver/webtop:" + b.Tag
 	}
-	return fmt.Sprintf("lscr.io/linuxserver/webtop:%s-%s", b.OS, b.Desktop)
+	return "lscr.io/linuxserver/webtop:" + WebtopTag(b.OS, b.Desktop)
 }
 
 // ModuleRef references a module to install. Supports both string shorthand

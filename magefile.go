@@ -84,6 +84,29 @@ func Tidy() error {
 	return run("go", "mod", "tidy")
 }
 
+// Integration runs all integration tests (requires Docker).
+//
+//	mage integration
+func Integration() error {
+	return run("go", "test", "-tags", "integration", "-v", "-timeout", "30m", "./modules/")
+}
+
+// IntegrationModule runs integration tests for a single module across all OS/desktop combos.
+//
+//	mage integrationmodule chrome
+func IntegrationModule(module string) error {
+	return run("go", "test", "-tags", "integration", "-v", "-timeout", "30m",
+		"-run", "TestBuildModule/"+module, "./modules/")
+}
+
+// IntegrationSpecific runs an integration test for one module + OS + desktop.
+//
+//	mage integrationspecific chrome ubuntu xfce
+func IntegrationSpecific(module, os, desktop string) error {
+	return run("go", "test", "-tags", "integration", "-v", "-timeout", "30m",
+		"-run", fmt.Sprintf("TestBuildModule/%s/%s/%s", module, os, desktop), "./modules/")
+}
+
 // Clean removes build artifacts.
 func Clean() error {
 	fmt.Println("Cleaning", buildDir+"...")

@@ -6,9 +6,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 
 	"github.com/desktopus-org/desktopus/internal/build"
@@ -72,8 +74,55 @@ func TestBuildModule(t *testing.T) {
 					if buildLog {
 						t.Logf("Build output:\n%s", output.String())
 					}
+
+					for i, cmd := range mod.SmokeCmds(os) {
+						i, cmd := i, cmd
+						t.Run(fmt.Sprintf("smoke/%d", i), func(t *testing.T) {
+							runSmokeTest(t, ctx, docker, imageTag, cmd)
+						})
+					}
 				})
 			}
+		}
+	}
+}
+
+// runSmokeTest runs a one-shot container overriding the entrypoint with cmd,
+// waits for it to exit, and fails the test if the exit code is non-zero.
+func runSmokeTest(t *testing.T, ctx context.Context, docker *client.Client, imageTag string, cmd []string) {
+	t.Helper()
+
+	resp, err := docker.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config: &container.Config{
+			Image:      imageTag,
+			Entrypoint: cmd[:1],
+			Cmd:        cmd[1:],
+		},
+	})
+	if err != nil {
+		t.Fatalf("ContainerCreate: %v", err)
+	}
+	defer docker.ContainerRemove(ctx, resp.ID, client.ContainerRemoveOptions{Force: true}) //nolint:errcheck
+
+	if _, err := docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
+		t.Fatalf("ContainerStart: %v", err)
+	}
+
+	result := docker.ContainerWait(ctx, resp.ID, client.ContainerWaitOptions{Condition: container.WaitConditionNotRunning})
+	select {
+	case err := <-result.Error:
+		t.Fatalf("ContainerWait: %v", err)
+	case status := <-result.Result:
+		if status.StatusCode != 0 {
+			logsResult, _ := docker.ContainerLogs(ctx, resp.ID, client.ContainerLogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+			})
+			var buf bytes.Buffer
+			if logsResult != nil {
+				_, _ = io.Copy(&buf, logsResult)
+			}
+			t.Fatalf("smoke test exited %d:\n%s", status.StatusCode, buf.String())
 		}
 	}
 }

@@ -67,6 +67,12 @@ desktopus.yaml → resolve modules → check compatibility
 
 All planning and design docs are in `docs/plan/`. See `docs/plan/README.md` for the index. The project follows a 6-phase implementation plan.
 
+## Git Workflow
+
+- Never work directly on `main`. For every feature, fix, or task: create a branch first.
+- Branch naming: `feat/<name>`, `fix/<name>`, etc.
+- When work is complete and CI passes: squash and merge the PR (`gh pr merge --squash`), then delete the branch (local + remote).
+
 ## Commit Style
 
 Do not add `Co-Authored-By` lines or any author attribution for AI in commit messages.

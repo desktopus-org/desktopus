@@ -195,8 +195,8 @@ func TestChromeModule(t *testing.T) {
 		t.Errorf("expected gnupg in system_packages, got %v", mod.SystemPkgs)
 	}
 
-	// Compatibility lists all 6 OSes
-	expectedOSes := config.SupportedOSList()
+	// Compatibility lists all supported OSes except Alpine (Chrome unavailable on musl)
+	expectedOSes := []string{"ubuntu", "debian", "fedora", "el", "arch"}
 	if len(mod.Compatibility.OS) != len(expectedOSes) {
 		t.Errorf("expected %d OSes, got %d: %v", len(expectedOSes), len(mod.Compatibility.OS), mod.Compatibility.OS)
 	}
@@ -205,14 +205,17 @@ func TestChromeModule(t *testing.T) {
 			t.Errorf("missing OS %q in chrome compatibility", os)
 		}
 	}
+	if contains(mod.Compatibility.OS, "alpine") {
+		t.Error("alpine should not be in chrome compatibility")
+	}
 
-	// Has 6 OS-specific task files
+	// Has 5 OS-specific task files (no alpine)
 	osCount := 0
 	for range mod.OSTaskFiles {
 		osCount++
 	}
-	if osCount != 6 {
-		t.Errorf("expected 6 OS task files, got %d: %v", osCount, mod.OSTaskFiles)
+	if osCount != 5 {
+		t.Errorf("expected 5 OS task files, got %d: %v", osCount, mod.OSTaskFiles)
 	}
 }
 

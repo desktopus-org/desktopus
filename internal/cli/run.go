@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -80,7 +81,7 @@ var runCmd = &cobra.Command{
 		// Build the runtime config from the desktop config
 		runCfg := toDesktopRunConfig(cfg)
 
-		containerID, err := mgr.Run(context.Background(), runCfg, opts)
+		containerID, err := mgr.Run(context.Background(), runCfg, opts, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("failed to run desktop: %w", err)
 		}

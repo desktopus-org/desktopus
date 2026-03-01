@@ -1,8 +1,18 @@
-# Desktopus
+<div align="center">
+<img src="https://raw.githubusercontent.com/desktopus-org/.github/main/design/logo_rounded.png" width="200" height="200">
+</div>
+<h1 align="center">Desktopus</h1>
 
-Linux desktop-as-code. Define your desktop environment in YAML, build it as a Docker image, and run it anywhere.
+### What is Desktopus?
 
-Desktopus builds on top of [linuxserver/docker-webtop](https://github.com/linuxserver/docker-webtop), adding a module system (powered by Ansible), post-run scripts, runtime file templating, and a CLI to manage the full lifecycle.
+- **Define and Deploy Anywhere:** Configure your Linux desktop as code and deploy it across various environments through containerization.
+- **Multi-Desktop Support:** Seamlessly use multiple Linux desktops simultaneously, keeping your workflows organized and distinct.
+- **Effortless Workspace Switching:** Quickly switch between different Linux workspaces without hassle.
+- **Optimized Resource Utilization:** Run multiple Linux desktops concurrently, leveraging all available system resources.
+- **Versatile Deployment:** Operate your Linux desktops locally, remotely, or on Kubernetes (k8s) using container technology.
+
+> [!WARNING]
+> This project is in early stages of development.
 
 ## Prerequisites
 

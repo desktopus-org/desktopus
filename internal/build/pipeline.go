@@ -15,6 +15,7 @@ import (
 
 	"github.com/desktopus-org/desktopus/internal/config"
 	"github.com/desktopus-org/desktopus/internal/module"
+	"github.com/desktopus-org/desktopus/internal/progress"
 )
 
 //go:embed templates/*
@@ -250,10 +251,14 @@ func addRuntimeFiles(bctx *BuildContext, cfg *config.DesktopConfig) error {
 
 func streamBuildOutput(reader io.Reader, output io.Writer) error {
 	decoder := json.NewDecoder(reader)
+	pr := progress.New(output)
 	for {
 		var msg struct {
-			Stream string `json:"stream"`
-			Error  string `json:"error"`
+			Stream   string `json:"stream"`
+			Error    string `json:"error"`
+			Status   string `json:"status"`
+			Progress string `json:"progress"`
+			ID       string `json:"id"`
 		}
 		if err := decoder.Decode(&msg); err != nil {
 			if err == io.EOF {
@@ -262,10 +267,20 @@ func streamBuildOutput(reader io.Reader, output io.Writer) error {
 			return err
 		}
 		if msg.Error != "" {
+			pr.Clear()
 			return fmt.Errorf("build error: %s", msg.Error)
 		}
 		if msg.Stream != "" {
+			pr.Flush()
 			fmt.Fprint(output, msg.Stream)
+			continue
+		}
+		if msg.Status != "" {
+			if msg.ID != "" {
+				pr.Update(msg.ID, msg.Status, msg.Progress)
+			} else {
+				pr.Print(msg.Status)
+			}
 		}
 	}
 }

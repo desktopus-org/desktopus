@@ -2,7 +2,9 @@ package runtime
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/netip"
 	"os"
 	"strconv"
@@ -12,6 +14,8 @@ import (
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
+
+	"github.com/desktopus-org/desktopus/internal/progress"
 )
 
 // Manager handles container lifecycle via the Docker SDK
@@ -24,8 +28,13 @@ func NewManager(docker *client.Client) *Manager {
 	return &Manager{docker: docker}
 }
 
-// Run creates and starts a container from a desktop config
-func (m *Manager) Run(ctx context.Context, cfg *DesktopRunConfig, opts RunOptions) (string, error) {
+// Run creates and starts a container from a desktop config.
+// output receives pull progress if the image is not present locally.
+func (m *Manager) Run(ctx context.Context, cfg *DesktopRunConfig, opts RunOptions, output io.Writer) (string, error) {
+	if err := m.pullIfMissing(ctx, cfg.ImageTag, output); err != nil {
+		return "", err
+	}
+
 	containerName := cfg.Name
 	if opts.Name != "" {
 		containerName = opts.Name
@@ -100,6 +109,55 @@ func (m *Manager) Run(ctx context.Context, cfg *DesktopRunConfig, opts RunOption
 	}
 
 	return resp.ID, nil
+}
+
+// pullIfMissing pulls the image if it is not already present locally.
+func (m *Manager) pullIfMissing(ctx context.Context, image string, output io.Writer) error {
+	_, err := m.docker.ImageInspect(ctx, image)
+	if err == nil {
+		return nil
+	}
+
+	fmt.Fprintf(output, "Pulling %s...\n", image)
+	rc, err := m.docker.ImagePull(ctx, image, client.ImagePullOptions{})
+	if err != nil {
+		return fmt.Errorf("pulling image %s: %w", image, err)
+	}
+	defer rc.Close()
+
+	return streamPullOutput(rc, output)
+}
+
+func streamPullOutput(reader io.Reader, output io.Writer) error {
+	decoder := json.NewDecoder(reader)
+	pr := progress.New(output)
+	for {
+		var event struct {
+			Status   string `json:"status"`
+			Progress string `json:"progress"`
+			ID       string `json:"id"`
+			Error    string `json:"error"`
+		}
+		if err := decoder.Decode(&event); err != nil {
+			if err == io.EOF {
+				pr.Flush()
+				return nil
+			}
+			return err
+		}
+		if event.Error != "" {
+			pr.Clear()
+			return fmt.Errorf("%s", event.Error)
+		}
+		if event.Status == "" {
+			continue
+		}
+		if event.ID != "" {
+			pr.Update(event.ID, event.Status, event.Progress)
+		} else {
+			pr.Print(event.Status)
+		}
+	}
 }
 
 // Stop stops a container by name or ID

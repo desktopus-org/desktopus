@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/moby/moby/api/types/container"
@@ -190,5 +191,64 @@ func TestFormatPortsNoPublic(t *testing.T) {
 	result := formatPorts(ports)
 	if result != "-" {
 		t.Errorf("expected '-' for no public ports, got %q", result)
+	}
+}
+
+func TestStreamPullOutput(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr string
+	}{
+		{
+			name: "only meaningful events are shown",
+			input: `{"status":"Pulling from linuxserver/webtop","id":"latest"}
+{"status":"Pulling fs layer","id":"abc12345"}
+{"status":"Waiting","id":"abc12345"}
+{"status":"Downloading","progressDetail":{"current":100,"total":1000},"progress":"[=>  ]","id":"abc12345"}
+{"status":"Verifying Checksum","id":"abc12345"}
+{"status":"Download complete","id":"abc12345"}
+{"status":"Extracting","id":"abc12345"}
+{"status":"Pull complete","id":"abc12345"}
+{"status":"Digest: sha256:deadbeef"}
+{"status":"Status: Downloaded newer image for linuxserver/webtop:latest"}
+`,
+			want: "latest: Pulling from linuxserver/webtop\nabc12345: Download complete\nabc12345: Pull complete\nDigest: sha256:deadbeef\nStatus: Downloaded newer image for linuxserver/webtop:latest\n",
+		},
+		{
+			name:    "error event returns error",
+			input:   `{"error":"pull access denied"}`,
+			wantErr: "pull access denied",
+		},
+		{
+			name:  "empty stream",
+			input: ``,
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			err := streamPullOutput(strings.NewReader(tt.input), &buf)
+
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.wantErr)
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Errorf("expected error %q, got %q", tt.wantErr, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if buf.String() != tt.want {
+				t.Errorf("output mismatch\ngot:  %q\nwant: %q", buf.String(), tt.want)
+			}
+		})
 	}
 }

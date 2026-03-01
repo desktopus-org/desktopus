@@ -774,6 +774,66 @@ func TestStreamBuildOutputEmpty(t *testing.T) {
 	}
 }
 
+func TestStreamBuildOutputPullProgress(t *testing.T) {
+	// Docker emits pull progress events (status/id/progress) during FROM pulls.
+	// Only meaningful state transitions should be shown; intermediate noise
+	// (Waiting, Downloading, Extracting, Verifying Checksum) must be suppressed.
+	input := `{"status":"Pulling from linuxserver/webtop","id":"ubuntu-xfce"}
+{"status":"Pulling fs layer","progressDetail":{},"id":"abc12345"}
+{"status":"Waiting","progressDetail":{},"id":"abc12345"}
+{"status":"Downloading","progressDetail":{"current":100,"total":1000},"progress":"[=>  ]","id":"abc12345"}
+{"status":"Verifying Checksum","progressDetail":{},"id":"abc12345"}
+{"status":"Download complete","progressDetail":{},"id":"abc12345"}
+{"status":"Extracting","progressDetail":{},"id":"abc12345"}
+{"status":"Pull complete","progressDetail":{},"id":"abc12345"}
+{"status":"Digest: sha256:deadbeef"}
+{"status":"Status: Downloaded newer image for linuxserver/webtop:ubuntu-xfce"}
+{"stream":"Step 1/9 : FROM lscr.io/linuxserver/webtop:ubuntu-xfce\n"}
+`
+	var output bytes.Buffer
+	if err := streamBuildOutput(strings.NewReader(input), &output); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := output.String()
+
+	// Meaningful events must appear
+	if !strings.Contains(got, "ubuntu-xfce: Pulling from linuxserver/webtop") {
+		t.Error("missing pull-from line")
+	}
+	if !strings.Contains(got, "abc12345: Pull complete") {
+		t.Error("missing pull-complete line")
+	}
+	if !strings.Contains(got, "Digest: sha256:deadbeef") {
+		t.Error("missing digest line")
+	}
+	if !strings.Contains(got, "Status: Downloaded newer image") {
+		t.Error("missing status line")
+	}
+
+	// Noisy intermediate events must be suppressed
+	if strings.Contains(got, "Pulling fs layer") {
+		t.Error("'Pulling fs layer' should be suppressed")
+	}
+	if strings.Contains(got, "Waiting") {
+		t.Error("'Waiting' should be suppressed")
+	}
+	if strings.Contains(got, "[=>  ]") {
+		t.Error("download progress bar should be suppressed")
+	}
+	if strings.Contains(got, "Extracting") {
+		t.Error("'Extracting' should be suppressed")
+	}
+	if strings.Contains(got, "Verifying Checksum") {
+		t.Error("'Verifying Checksum' should be suppressed")
+	}
+
+	// Regular stream events must still appear
+	if !strings.Contains(got, "Step 1/9") {
+		t.Error("missing stream output")
+	}
+}
+
 // --- templateFuncs ---
 
 func TestTemplateFuncRepeat(t *testing.T) {

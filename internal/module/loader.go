@@ -39,8 +39,23 @@ func LoadFromFS(fsys fs.FS, dir string) (*Module, error) {
 	}
 
 	mod.OSTaskFiles = discoverOSTaskFiles(fsys, dir)
+	mod.Tests = loadModuleTests(fsys, dir)
 
 	return &mod, nil
+}
+
+// loadModuleTests optionally loads module_test.yaml from the module directory.
+// Returns nil if the file does not exist or cannot be parsed.
+func loadModuleTests(fsys fs.FS, dir string) *ModuleTests {
+	data, err := fs.ReadFile(fsys, dir+"/module_test.yaml")
+	if err != nil {
+		return nil
+	}
+	var tests ModuleTests
+	if err := yaml.Unmarshal(data, &tests); err != nil {
+		return nil
+	}
+	return &tests
 }
 
 // discoverOSTaskFiles scans the tasks/ directory for OS-specific task files.

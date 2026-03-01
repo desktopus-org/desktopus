@@ -272,7 +272,7 @@ func streamBuildOutput(reader io.Reader, output io.Writer) error {
 		}
 		if msg.Stream != "" {
 			pr.Flush()
-			_, _ = fmt.Fprint(output, msg.Stream)
+			fmt.Fprint(output, msg.Stream)
 			continue
 		}
 		if msg.Status != "" {

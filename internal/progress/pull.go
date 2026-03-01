@@ -57,7 +57,7 @@ func (r *Renderer) Update(id, status, progress string) {
 		r.redraw()
 	} else {
 		if isMeaningfulStatus(status) {
-			_, _ = fmt.Fprintf(r.w, "%s: %s\n", id, status)
+			fmt.Fprintf(r.w, "%s: %s\n", id, status)
 		}
 	}
 }
@@ -68,7 +68,7 @@ func (r *Renderer) Print(line string) {
 	if r.isTTY {
 		r.Flush()
 	}
-	_, _ = fmt.Fprintf(r.w, "%s\n", line)
+	fmt.Fprintf(r.w, "%s\n", line)
 }
 
 // Flush finalises the in-place display: redraws all layers as static output
@@ -79,7 +79,7 @@ func (r *Renderer) Flush() {
 	}
 	r.clearLines(r.drawn)
 	for _, id := range r.order {
-		_, _ = fmt.Fprintf(r.w, "%s: %s\n", id, r.states[id].status)
+		fmt.Fprintf(r.w, "%s: %s\n", id, r.states[id].status)
 	}
 	// Reset so a subsequent pull (e.g. multi-stage FROM) starts fresh.
 	r.drawn = 0
@@ -105,13 +105,13 @@ func (r *Renderer) redraw() {
 		switch {
 		case isLayerDone(s.status) || strings.HasPrefix(s.status, "Pulling from"):
 			// Done or header line: static, no spinner.
-			_, _ = fmt.Fprintf(r.w, "  %s: %s\n", id, s.status)
+			fmt.Fprintf(r.w, "  %s: %s\n", id, s.status)
 		case s.progress != "":
 			// Active with a progress bar from Docker.
-			_, _ = fmt.Fprintf(r.w, "%s %s: %s %s\n", spin, id, s.status, s.progress)
+			fmt.Fprintf(r.w, "%s %s: %s %s\n", spin, id, s.status, s.progress)
 		default:
 			// Active without a progress bar: show spinner + status only.
-			_, _ = fmt.Fprintf(r.w, "%s %s: %s\n", spin, id, s.status)
+			fmt.Fprintf(r.w, "%s %s: %s\n", spin, id, s.status)
 		}
 		r.drawn++
 	}
@@ -123,7 +123,7 @@ func isLayerDone(status string) bool {
 
 func (r *Renderer) clearLines(n int) {
 	for i := 0; i < n; i++ {
-		_, _ = fmt.Fprint(r.w, "\033[1A\033[2K")
+		fmt.Fprint(r.w, "\033[1A\033[2K")
 	}
 }
 

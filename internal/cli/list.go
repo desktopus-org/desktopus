@@ -41,9 +41,9 @@ var listCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		_, _ = fmt.Fprintln(w, "NAME\tIMAGE\tSTATUS\tPORTS")
+		fmt.Fprintln(w, "NAME\tIMAGE\tSTATUS\tPORTS")
 		for _, c := range containers {
-			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Name, c.Image, c.State, c.Ports)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Name, c.Image, c.State, c.Ports)
 		}
 		return w.Flush()
 	},

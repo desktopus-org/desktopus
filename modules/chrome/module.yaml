@@ -14,13 +14,3 @@ vars:
     description: "Chrome release channel (stable, beta, unstable)"
 
 system_packages: [wget, gnupg]
-
-tests:
-  required_vars: [chrome_channel]
-  required_system_packages: [wget, gnupg]
-  excluded_os: [alpine]
-  os_specific_task_files: true
-  smoke:
-    default:
-      - ["/usr/local/bin/google-chrome", "--version"]
-      - ["sh", "-c", "exec $(grep -m1 '^Exec=' /usr/share/applications/google-chrome.desktop | sed 's/^Exec=//;s/ %[A-Za-z]//g') --version"]

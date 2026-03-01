@@ -7,6 +7,12 @@
     name: chromium
     state: present
 
+- name: Patch Chromium desktop file to add --no-sandbox (required in containers)
+  ansible.builtin.replace:
+    path: /usr/share/applications/chromium.desktop
+    regexp: '^(Exec=chromium[^ ]*)(.*)'
+    replace: '\1 --no-sandbox\2'
+
 - name: Ensure Desktop directory exists
   ansible.builtin.file:
     path: "{{ desktopus_home }}/Desktop"

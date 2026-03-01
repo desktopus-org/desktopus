@@ -20,7 +20,8 @@ type Module struct {
 	// OSTaskFiles maps OS names to true if tasks/<os>.yml exists
 	OSTaskFiles map[string]bool `yaml:"-"`
 
-	SmokeTest *SmokeTest `yaml:"smoke_test,omitempty"`
+	SmokeTest *SmokeTest   `yaml:"smoke_test,omitempty"`
+	Tests     *ModuleTests `yaml:"tests,omitempty"`
 }
 
 // Compatibility defines which OS/desktop/arch combos a module supports
@@ -28,6 +29,14 @@ type Compatibility struct {
 	OS      []string `yaml:"os,omitempty"`
 	Desktop []string `yaml:"desktop,omitempty"`
 	Arch    []string `yaml:"arch,omitempty"`
+}
+
+// ModuleTests defines declarative contract assertions evaluated by unit tests.
+type ModuleTests struct {
+	RequiredVars           []string `yaml:"required_vars,omitempty"`
+	RequiredSystemPackages []string `yaml:"required_system_packages,omitempty"`
+	ExcludedOS             []string `yaml:"excluded_os,omitempty"`
+	OSSpecificTaskFiles    bool     `yaml:"os_specific_task_files,omitempty"`
 }
 
 // SmokeTest defines commands to run inside a built image to verify the module works.

@@ -15,6 +15,12 @@ vars:
 
 system_packages: [wget, gnupg]
 
+tests:
+  required_vars: [chrome_channel]
+  required_system_packages: [wget, gnupg]
+  excluded_os: [alpine]
+  os_specific_task_files: true
+
 smoke_test:
   default:
     - ["/usr/local/bin/google-chrome", "--version"]

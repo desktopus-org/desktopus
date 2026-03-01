@@ -1,12 +1,19 @@
 ---
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
 - name: Add Google Chrome signing key
-  ansible.builtin.apt_key:
+  ansible.builtin.get_url:
     url: https://dl.google.com/linux/linux_signing_key.pub
-    state: present
+    dest: /etc/apt/keyrings/google-chrome.asc
+    mode: "0644"
 
 - name: Add Google Chrome repository
   ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.asc] http://dl.google.com/linux/chrome/deb/ stable main"
     state: present
     filename: google-chrome
 

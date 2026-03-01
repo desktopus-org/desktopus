@@ -14,6 +14,14 @@
 - **Optimized Resource Utilization:** Run multiple Linux desktops concurrently, leveraging all available system resources.
 - **Versatile Deployment:** Operate your Linux desktops locally, remotely, or on Kubernetes (k8s) using container technology.
 
+## Built on Open Source
+
+Desktopus builds on top of two excellent open-source projects:
+
+- **[docker-webtop](https://github.com/linuxserver/docker-webtop)** — LinuxServer.io's container images that package full Linux desktop environments, accessible via a browser. Desktopus uses these as base images.
+- **[Selkies](https://github.com/selkies-project/selkies)** — The streaming technology powering the in-browser desktop experience (WebRTC-based remote desktop).
+
+
 ## Prerequisites
 
 - [Go](https://go.dev/) 1.24+

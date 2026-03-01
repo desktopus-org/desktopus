@@ -8,6 +8,23 @@ FROM {{ .BaseImage }}
 # Create desktop user
 # ============================================
 RUN useradd -m -d {{ .Home }} -s /bin/bash {{ .User }}
+
+# ============================================
+# Patch s6 services and desktop session launchers
+# to run as {{ .User }} instead of the built-in abc user
+# ============================================
+RUN find /etc/s6-overlay/s6-rc.d/ -type f -name "run" \
+      -exec sed -i \
+        -e 's/s6-setuidgid abc/s6-setuidgid {{ .User }}/g' \
+        -e 's/chown abc:abc/chown {{ .User }}:{{ .User }}/g' \
+        -e 's/lsiown abc:abc/lsiown {{ .User }}:{{ .User }}/g' \
+        -e 's|/tmp/xdg-runtime-abc|/tmp/xdg-runtime-{{ .User }}|g' \
+      {} + && \
+    find /defaults/ -maxdepth 1 -name "startwm*.sh" \
+      -exec sed -i \
+        -e 's/chown abc:abc/chown {{ .User }}:{{ .User }}/g' \
+        -e 's|/tmp/xdg-runtime-abc|/tmp/xdg-runtime-{{ .User }}|g' \
+      {} +
 {{- end }}
 
 # ============================================

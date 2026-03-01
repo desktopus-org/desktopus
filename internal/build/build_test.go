@@ -858,11 +858,8 @@ func TestGenerateDockerfileDefaultUser(t *testing.T) {
 	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/desktopus -s /bin/bash desktopus") {
 		t.Errorf("expected useradd for default user, got:\n%s", dockerfile)
 	}
-	if !strings.Contains(dockerfile, "s6-setuidgid desktopus") {
-		t.Errorf("expected sed patch for s6-setuidgid, got:\n%s", dockerfile)
-	}
-	if !strings.Contains(dockerfile, "xdg-runtime-desktopus") {
-		t.Errorf("expected sed patch for xdg-runtime dir, got:\n%s", dockerfile)
+	if !strings.Contains(dockerfile, `s/\babc\b/desktopus/g`) {
+		t.Errorf("expected word-boundary sed patch for desktopus, got:\n%s", dockerfile)
 	}
 }
 
@@ -888,7 +885,7 @@ func TestGenerateDockerfileAbcUser(t *testing.T) {
 	if strings.Contains(dockerfile, "RUN useradd") {
 		t.Error("abc user should not emit RUN useradd (built-in user)")
 	}
-	if strings.Contains(dockerfile, "s6-setuidgid desktopus") || strings.Contains(dockerfile, "sed -i") {
+	if strings.Contains(dockerfile, "sed -i") {
 		t.Error("abc user should not emit s6 patching")
 	}
 }
@@ -915,11 +912,8 @@ func TestGenerateDockerfileCustomUser(t *testing.T) {
 	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/carlos -s /bin/bash carlos") {
 		t.Errorf("expected useradd for custom user, got:\n%s", dockerfile)
 	}
-	if !strings.Contains(dockerfile, "s6-setuidgid carlos") {
-		t.Errorf("expected sed patch for s6-setuidgid carlos, got:\n%s", dockerfile)
-	}
-	if !strings.Contains(dockerfile, "xdg-runtime-carlos") {
-		t.Errorf("expected sed patch for xdg-runtime dir, got:\n%s", dockerfile)
+	if !strings.Contains(dockerfile, `s/\babc\b/carlos/g`) {
+		t.Errorf("expected word-boundary sed patch for carlos, got:\n%s", dockerfile)
 	}
 }
 

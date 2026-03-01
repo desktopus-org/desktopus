@@ -13,11 +13,29 @@
     name: "google-chrome-{{ chrome_channel | default('stable') }}"
     state: present
 
-- name: Patch Chrome desktop file to add --no-sandbox (required in containers)
+- name: Create Google Chrome wrapper script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/google-chrome
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      BIN=/opt/google/chrome/google-chrome
+
+      if ! pgrep -x google-chrome > /dev/null; then
+        rm -f "$HOME/.config/google-chrome/Singleton"*
+      fi
+
+      if grep -q 'Seccomp:.0' /proc/1/status; then
+        ${BIN} --no-first-run --password-store=basic "$@"
+      else
+        ${BIN} --no-first-run --password-store=basic --no-sandbox --test-type "$@"
+      fi
+
+- name: Patch Chrome desktop file to use wrapper
   ansible.builtin.replace:
     path: /usr/share/applications/google-chrome.desktop
-    regexp: '^(Exec=/usr/bin/google-chrome[^ ]*)(.*)'
-    replace: '\1 --no-sandbox\2'
+    regexp: '^(Exec=)[^ ]*(.*)'
+    replace: '\1/usr/local/bin/google-chrome\2'
 
 - name: Ensure Desktop directory exists
   ansible.builtin.file:

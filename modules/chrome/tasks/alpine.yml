@@ -7,11 +7,29 @@
     name: chromium
     state: present
 
-- name: Patch Chromium desktop file to add --no-sandbox (required in containers)
+- name: Create Chromium wrapper script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/chromium
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      BIN=/usr/bin/chromium-browser
+
+      if ! pgrep chromium > /dev/null; then
+        rm -f "$HOME/.config/chromium/Singleton"*
+      fi
+
+      if grep -q 'Seccomp:.0' /proc/1/status; then
+        ${BIN} --no-first-run --password-store=basic "$@"
+      else
+        ${BIN} --no-first-run --password-store=basic --no-sandbox --test-type "$@"
+      fi
+
+- name: Patch Chromium desktop file to use wrapper
   ansible.builtin.replace:
     path: /usr/share/applications/chromium.desktop
-    regexp: '^(Exec=chromium[^ ]*)(.*)'
-    replace: '\1 --no-sandbox\2'
+    regexp: '^(Exec=)[^ ]*(.*)'
+    replace: '\1/usr/local/bin/chromium\2'
 
 - name: Ensure Desktop directory exists
   ansible.builtin.file:

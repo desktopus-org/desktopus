@@ -32,10 +32,13 @@ func LoadFromFS(fsys fs.FS, dir string) (*Module, error) {
 		return nil, fmt.Errorf("parsing module.yaml from %s: %w", dir, err)
 	}
 
-	// Verify tasks/main.yml exists
-	tasksPath := dir + "/tasks/main.yml"
-	if _, err := fs.Stat(fsys, tasksPath); err != nil {
-		return nil, fmt.Errorf("module %q missing tasks/main.yml", mod.Name)
+	// Require tasks/main.yml only when no compatible OSes are declared.
+	// When specific OSes are listed, each is expected to have its own task file.
+	if len(mod.Compatibility.OS) == 0 {
+		tasksPath := dir + "/tasks/main.yml"
+		if _, err := fs.Stat(fsys, tasksPath); err != nil {
+			return nil, fmt.Errorf("module %q missing tasks/main.yml", mod.Name)
+		}
 	}
 
 	mod.OSTaskFiles = discoverOSTaskFiles(fsys, dir)

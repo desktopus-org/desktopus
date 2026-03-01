@@ -62,6 +62,35 @@ func TestIsCompatibleBothConstraints(t *testing.T) {
 	}
 }
 
+// --- TaskFile ---
+
+func TestTaskFileDefault(t *testing.T) {
+	mod := &Module{Name: "test", OSTaskFiles: map[string]bool{}}
+	if got := mod.TaskFile("ubuntu"); got != "tasks/main.yml" {
+		t.Errorf("expected tasks/main.yml, got %q", got)
+	}
+}
+
+func TestTaskFileOSSpecific(t *testing.T) {
+	mod := &Module{
+		Name:        "test",
+		OSTaskFiles: map[string]bool{"ubuntu": true},
+	}
+	if got := mod.TaskFile("ubuntu"); got != "tasks/ubuntu.yml" {
+		t.Errorf("expected tasks/ubuntu.yml, got %q", got)
+	}
+	if got := mod.TaskFile("fedora"); got != "tasks/main.yml" {
+		t.Errorf("expected tasks/main.yml for fedora, got %q", got)
+	}
+}
+
+func TestTaskFileNilMap(t *testing.T) {
+	mod := &Module{Name: "test"}
+	if got := mod.TaskFile("ubuntu"); got != "tasks/main.yml" {
+		t.Errorf("expected tasks/main.yml with nil map, got %q", got)
+	}
+}
+
 // --- LoadFromFS ---
 
 func TestLoadFromFS(t *testing.T) {
@@ -245,6 +274,69 @@ func TestIsPath(t *testing.T) {
 				t.Errorf("isPath(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestLoadFromFSDiscoversOSTaskFiles(t *testing.T) {
+	fsys := fstest.MapFS{
+		"mymod/module.yaml": &fstest.MapFile{
+			Data: []byte("name: mymod\n"),
+		},
+		"mymod/tasks/main.yml":   &fstest.MapFile{Data: []byte("- name: default\n")},
+		"mymod/tasks/ubuntu.yml": &fstest.MapFile{Data: []byte("- name: ubuntu\n")},
+		"mymod/tasks/debian.yml": &fstest.MapFile{Data: []byte("- name: debian\n")},
+	}
+
+	mod, err := LoadFromFS(fsys, "mymod")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !mod.OSTaskFiles["ubuntu"] {
+		t.Error("expected ubuntu to be discovered")
+	}
+	if !mod.OSTaskFiles["debian"] {
+		t.Error("expected debian to be discovered")
+	}
+	if mod.OSTaskFiles["fedora"] {
+		t.Error("fedora should not be discovered")
+	}
+}
+
+func TestLoadFromFSIgnoresNonOSFiles(t *testing.T) {
+	fsys := fstest.MapFS{
+		"mymod/module.yaml": &fstest.MapFile{
+			Data: []byte("name: mymod\n"),
+		},
+		"mymod/tasks/main.yml":    &fstest.MapFile{Data: []byte("- name: default\n")},
+		"mymod/tasks/helpers.yml": &fstest.MapFile{Data: []byte("- name: helpers\n")},
+	}
+
+	mod, err := LoadFromFS(fsys, "mymod")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(mod.OSTaskFiles) != 0 {
+		t.Errorf("expected no OS task files, got %v", mod.OSTaskFiles)
+	}
+}
+
+func TestLoadFromFSNoOSTaskFiles(t *testing.T) {
+	fsys := fstest.MapFS{
+		"mymod/module.yaml": &fstest.MapFile{
+			Data: []byte("name: mymod\n"),
+		},
+		"mymod/tasks/main.yml": &fstest.MapFile{Data: []byte("- name: default\n")},
+	}
+
+	mod, err := LoadFromFS(fsys, "mymod")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(mod.OSTaskFiles) != 0 {
+		t.Errorf("expected empty OSTaskFiles, got %v", mod.OSTaskFiles)
 	}
 }
 

@@ -8,6 +8,8 @@ FROM {{ .BaseImage }}
 # ============================================
 USER root
 
+{{- if or (eq .OS "ubuntu") (eq .OS "debian") }}
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ansible \
@@ -16,10 +18,40 @@ RUN apt-get update && \
       {{ . }} \
 {{- end }}
     && rm -rf /var/lib/apt/lists/*
+{{- else if or (eq .OS "fedora") (eq .OS "el") }}
+
+RUN dnf install -y \
+      ansible \
+      python3-dnf \
+{{- range .SystemPackages }}
+      {{ . }} \
+{{- end }}
+    && dnf clean all
+{{- else if eq .OS "arch" }}
+
+RUN pacman -Sy --noconfirm \
+      ansible \
+      python \
+{{- range .SystemPackages }}
+      {{ . }} \
+{{- end }}
+    && pacman -Scc --noconfirm
+{{- else if eq .OS "alpine" }}
+
+RUN apk add --no-cache \
+      ansible \
+      python3 \
+{{- range .SystemPackages }}
+      {{ . }} \
+{{- end }}
+    && true
+{{- end }}
 
 COPY modules/ /tmp/desktopus-build/modules/
 COPY playbook.yml /tmp/desktopus-build/playbook.yml
 COPY ansible.cfg /tmp/desktopus-build/ansible.cfg
+
+{{- if or (eq .OS "ubuntu") (eq .OS "debian") }}
 
 RUN cd /tmp/desktopus-build && \
     ANSIBLE_CONFIG=/tmp/desktopus-build/ansible.cfg \
@@ -30,6 +62,39 @@ RUN cd /tmp/desktopus-build && \
     && apt-get purge -y ansible && \
     apt-get autoremove -y && \
     rm -rf /tmp/desktopus-build /var/lib/apt/lists/* /root/.ansible
+{{- else if or (eq .OS "fedora") (eq .OS "el") }}
+
+RUN cd /tmp/desktopus-build && \
+    ANSIBLE_CONFIG=/tmp/desktopus-build/ansible.cfg \
+    ansible-playbook playbook.yml --connection=local \
+{{- if gt .AnsibleVerbosity 0 }}
+    -{{ repeat .AnsibleVerbosity "v" }} \
+{{- end }}
+    && dnf remove -y ansible && \
+    dnf clean all && \
+    rm -rf /tmp/desktopus-build /root/.ansible
+{{- else if eq .OS "arch" }}
+
+RUN cd /tmp/desktopus-build && \
+    ANSIBLE_CONFIG=/tmp/desktopus-build/ansible.cfg \
+    ansible-playbook playbook.yml --connection=local \
+{{- if gt .AnsibleVerbosity 0 }}
+    -{{ repeat .AnsibleVerbosity "v" }} \
+{{- end }}
+    && pacman -Rns --noconfirm ansible && \
+    pacman -Scc --noconfirm && \
+    rm -rf /tmp/desktopus-build /root/.ansible
+{{- else if eq .OS "alpine" }}
+
+RUN cd /tmp/desktopus-build && \
+    ANSIBLE_CONFIG=/tmp/desktopus-build/ansible.cfg \
+    ansible-playbook playbook.yml --connection=local \
+{{- if gt .AnsibleVerbosity 0 }}
+    -{{ repeat .AnsibleVerbosity "v" }} \
+{{- end }}
+    && apk del ansible && \
+    rm -rf /tmp/desktopus-build /root/.ansible
+{{- end }}
 
 {{- if .PostRunScripts }}
 

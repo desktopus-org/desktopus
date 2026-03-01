@@ -47,7 +47,7 @@ Single-file database, zero external dependencies. Suitable for local-first usage
 - Based on baseimage-selkies (web desktop streaming via WebSocket + Canvas + VideoDecoder)
 - Uses s6-overlay v3 for process supervision
 - Container user: `abc`, home dir: `/config`
-- Ports: 3000 (HTTP), 3001 (HTTPS)
+- Ports: 3000 (HTTP), 3001 (HTTPS), 8082 (Selkies WebSocket data)
 - Env vars: PUID, PGID, TZ, DRINODE, PIXELFLUX_WAYLAND
 - GPU: mount `/dev/dri`, set DRINODE env var
 - Extend via `FROM lscr.io/linuxserver/webtop:...`

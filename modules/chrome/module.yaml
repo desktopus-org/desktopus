@@ -5,7 +5,7 @@ author: desktopus
 tags: [browser, web]
 
 compatibility:
-  os: [ubuntu, debian]
+  os: [ubuntu, debian, fedora, el, arch, alpine]
   arch: [amd64]
 
 vars:

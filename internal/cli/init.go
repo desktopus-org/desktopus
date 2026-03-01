@@ -87,6 +87,7 @@ runtime:
   ports:
     - "3000:3000"
     - "3001:3001"
+    - "8082:8082"
   # volumes:
   #   - ~/projects:/config/projects
   env:

@@ -13,6 +13,7 @@ import (
 type dockerfileData struct {
 	Name             string
 	Description      string
+	OS               string
 	BaseImage        string
 	SystemPackages   []string
 	AnsibleVerbosity int
@@ -37,6 +38,7 @@ func generateDockerfile(tmpl *template.Template, cfg *config.DesktopConfig, modu
 	data := dockerfileData{
 		Name:             cfg.Name,
 		Description:      cfg.Description,
+		OS:               cfg.Base.OS,
 		BaseImage:        cfg.Base.ImageRef(),
 		SystemPackages:   pkgs,
 		AnsibleVerbosity: ansibleVerbosity,

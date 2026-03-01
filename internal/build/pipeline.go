@@ -69,7 +69,7 @@ func (p *Pipeline) Build(ctx context.Context, cfg *config.DesktopConfig, configD
 	if err != nil {
 		return err
 	}
-	playbook, err := generatePlaybook(playbookTmpl, modules, varsOverrides)
+	playbook, err := generatePlaybook(playbookTmpl, modules, varsOverrides, cfg.Base.OS)
 	if err != nil {
 		return err
 	}

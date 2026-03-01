@@ -16,6 +16,9 @@ type Module struct {
 	// Path is the resolved filesystem path (not serialized)
 	Path    string `yaml:"-"`
 	Builtin bool   `yaml:"-"`
+
+	// OSTaskFiles maps OS names to true if tasks/<os>.yml exists
+	OSTaskFiles map[string]bool `yaml:"-"`
 }
 
 // Compatibility defines which OS/desktop/arch combos a module supports
@@ -29,6 +32,15 @@ type Compatibility struct {
 type Var struct {
 	Default     string `yaml:"default,omitempty"`
 	Description string `yaml:"description,omitempty"`
+}
+
+// TaskFile returns the task file path for the given OS.
+// If an OS-specific file exists (tasks/<os>.yml), it is preferred; otherwise tasks/main.yml.
+func (m *Module) TaskFile(os string) string {
+	if m.OSTaskFiles[os] {
+		return "tasks/" + os + ".yml"
+	}
+	return "tasks/main.yml"
 }
 
 // IsCompatible checks if the module supports a given OS and desktop

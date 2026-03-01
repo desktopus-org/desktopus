@@ -1,0 +1,48 @@
+---
+- name: Download Google Chrome RPM
+  ansible.builtin.get_url:
+    url: "https://dl.google.com/linux/direct/google-chrome-{{ chrome_channel | default('stable') }}_current_x86_64.rpm"
+    dest: /tmp/google-chrome.rpm
+
+- name: Create extraction directory
+  ansible.builtin.file:
+    path: /tmp/chrome-extract
+    state: directory
+
+- name: Extract Google Chrome RPM
+  ansible.builtin.command:
+    cmd: bsdtar -xf /tmp/google-chrome.rpm -C /tmp/chrome-extract
+    creates: /tmp/chrome-extract/opt
+
+- name: Install Google Chrome files
+  ansible.builtin.shell: |
+    cp -a /tmp/chrome-extract/opt/google /opt/google
+    cp /tmp/chrome-extract/usr/share/applications/*.desktop /usr/share/applications/ 2>/dev/null || true
+    cp -a /tmp/chrome-extract/usr/share/icons/* /usr/share/icons/ 2>/dev/null || true
+    ln -sf /opt/google/chrome/google-chrome /usr/bin/google-chrome
+  args:
+    creates: /opt/google/chrome/google-chrome
+
+- name: Clean up downloaded files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/google-chrome.rpm
+    - /tmp/chrome-extract
+
+- name: Ensure Desktop directory exists
+  ansible.builtin.file:
+    path: "{{ desktopus_home }}/Desktop"
+    state: directory
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+
+- name: Create desktop shortcut
+  ansible.builtin.copy:
+    src: /usr/share/applications/google-chrome.desktop
+    dest: "{{ desktopus_home }}/Desktop/google-chrome.desktop"
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+    remote_src: true
+  ignore_errors: true

@@ -98,7 +98,6 @@ func init() {
 func newDockerClient() (*client.Client, error) {
 	opts := []client.Opt{
 		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
 	}
 
 	if appConfig != nil && appConfig.Docker.Host != "" {

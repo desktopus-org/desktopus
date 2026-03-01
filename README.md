@@ -55,8 +55,8 @@ name: my-desktop
 description: "Dev desktop with Chrome"
 
 base:
-  os: ubuntu          # ubuntu | debian | fedora | arch | alpine
-  desktop: xfce       # xfce | kde | i3 | mate | openbox | icewm
+  os: ubuntu          # ubuntu | debian | fedora | arch | alpine | el
+  desktop: xfce       # xfce | kde | i3 | mate (availability varies by OS)
 
 modules:
   - chrome

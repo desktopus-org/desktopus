@@ -3,26 +3,45 @@ package config
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
 var validName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$`)
 
-var validOS = map[string]bool{
-	"ubuntu": true,
-	"debian": true,
-	"fedora": true,
-	"arch":   true,
-	"alpine": true,
+// compatMatrix maps each supported OS to its available desktop environments.
+// This reflects the actual linuxserver/webtop image tags.
+var compatMatrix = map[string][]string{
+	"alpine": {"i3", "kde", "mate", "xfce"},
+	"arch":   {"i3", "kde", "mate", "xfce"},
+	"debian": {"i3", "kde", "mate", "xfce"},
+	"el":     {"i3", "mate", "xfce"},
+	"fedora": {"i3", "kde", "mate", "xfce"},
+	"ubuntu": {"i3", "kde", "mate", "xfce"},
 }
 
-var validDesktop = map[string]bool{
-	"xfce":    true,
-	"kde":     true,
-	"i3":      true,
-	"mate":    true,
-	"openbox": true,
-	"icewm":   true,
+// SupportedOSList returns all supported OS names in sorted order.
+func SupportedOSList() []string {
+	list := make([]string, 0, len(compatMatrix))
+	for os := range compatMatrix {
+		list = append(list, os)
+	}
+	sort.Strings(list)
+	return list
+}
+
+// SupportedDesktopsForOS returns the valid desktop environments for a given OS.
+func SupportedDesktopsForOS(os string) []string {
+	return compatMatrix[os]
+}
+
+func sliceContains(slice []string, val string) bool {
+	for _, s := range slice {
+		if s == val {
+			return true
+		}
+	}
+	return false
 }
 
 // ValidateDesktop checks a DesktopConfig for errors
@@ -35,16 +54,18 @@ func ValidateDesktop(cfg *DesktopConfig) error {
 		errs = append(errs, fmt.Sprintf("name %q must be DNS-safe: lowercase alphanumeric and hyphens", cfg.Name))
 	}
 
+	desktops := compatMatrix[cfg.Base.OS]
+
 	if cfg.Base.OS == "" {
 		errs = append(errs, "base.os is required")
-	} else if !validOS[cfg.Base.OS] {
-		errs = append(errs, fmt.Sprintf("base.os %q is not supported (valid: ubuntu, debian, fedora, arch, alpine)", cfg.Base.OS))
+	} else if desktops == nil {
+		errs = append(errs, fmt.Sprintf("base.os %q is not supported (valid: %s)", cfg.Base.OS, strings.Join(SupportedOSList(), ", ")))
 	}
 
 	if cfg.Base.Desktop == "" {
 		errs = append(errs, "base.desktop is required")
-	} else if !validDesktop[cfg.Base.Desktop] {
-		errs = append(errs, fmt.Sprintf("base.desktop %q is not supported (valid: xfce, kde, i3, mate, openbox, icewm)", cfg.Base.Desktop))
+	} else if desktops != nil && !sliceContains(desktops, cfg.Base.Desktop) {
+		errs = append(errs, fmt.Sprintf("base.desktop %q is not available for os %q (valid: %s)", cfg.Base.Desktop, cfg.Base.OS, strings.Join(desktops, ", ")))
 	}
 
 	for i, m := range cfg.Modules {

@@ -10,9 +10,10 @@ import (
 
 // moduleEntry is the template data for a single module in the playbook
 type moduleEntry struct {
-	Name string
-	Dir  string // directory name inside the build context modules/ dir
-	Vars map[string]interface{}
+	Name     string
+	Dir      string // directory name inside the build context modules/ dir
+	TaskFile string // e.g. "tasks/main.yml" or "tasks/ubuntu.yml"
+	Vars     map[string]interface{}
 }
 
 type playbookData struct {
@@ -20,7 +21,7 @@ type playbookData struct {
 }
 
 // generatePlaybook renders the Ansible playbook from resolved modules
-func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOverrides []map[string]interface{}) ([]byte, error) {
+func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOverrides []map[string]interface{}, targetOS string) ([]byte, error) {
 	entries := make([]moduleEntry, len(modules))
 	for i, mod := range modules {
 		vars := make(map[string]interface{})
@@ -43,9 +44,10 @@ func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOve
 		}
 
 		entries[i] = moduleEntry{
-			Name: mod.Name,
-			Dir:  dir,
-			Vars: vars,
+			Name:     mod.Name,
+			Dir:      dir,
+			TaskFile: mod.TaskFile(targetOS),
+			Vars:     vars,
 		}
 	}
 

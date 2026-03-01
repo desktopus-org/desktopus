@@ -11,5 +11,5 @@
   tasks:
 {{- range .Modules }}
     - name: "Include {{ .Name }} module"
-      ansible.builtin.include_tasks: "modules/{{ .Dir }}/tasks/main.yml"
+      ansible.builtin.include_tasks: "modules/{{ .Dir }}/{{ .TaskFile }}"
 {{- end }}

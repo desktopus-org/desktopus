@@ -84,13 +84,12 @@ env:
 
 postrun:
   - name: configure-git
-    runas: abc
     script: |
       git config --global user.name "${GIT_USER_NAME}"
       git config --global user.email "${GIT_USER_EMAIL}"
 
 files:
-  - path: /config/.config/settings.json
+  - path: /home/desktopus/.config/settings.json
     content: '{"fontSize": 14}'
     mode: "0644"
 
@@ -100,7 +99,7 @@ runtime:
   ports:
     - "3000:3000"
   volumes:
-    - ~/projects:/config/projects
+    - ~/projects:/home/desktopus/projects
   gpu: false
   memory: 8g
   cpus: 4

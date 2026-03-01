@@ -18,10 +18,12 @@ type moduleEntry struct {
 
 type playbookData struct {
 	Modules []moduleEntry
+	User    string
+	Home    string
 }
 
 // generatePlaybook renders the Ansible playbook from resolved modules
-func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOverrides []map[string]interface{}, targetOS string) ([]byte, error) {
+func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOverrides []map[string]interface{}, targetOS, desktopusUser, desktopusHome string) ([]byte, error) {
 	entries := make([]moduleEntry, len(modules))
 	for i, mod := range modules {
 		vars := make(map[string]interface{})
@@ -52,7 +54,7 @@ func generatePlaybook(tmpl *template.Template, modules []*module.Module, varsOve
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, playbookData{Modules: entries}); err != nil {
+	if err := tmpl.Execute(&buf, playbookData{Modules: entries, User: desktopusUser, Home: desktopusHome}); err != nil {
 		return nil, fmt.Errorf("rendering playbook: %w", err)
 	}
 	return buf.Bytes(), nil

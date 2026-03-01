@@ -2,6 +2,38 @@
 # Desktop: {{ .Name }}
 
 FROM {{ .BaseImage }}
+{{- if .CreateUser }}
+
+# ============================================
+# Create desktop user
+# ============================================
+RUN useradd -m -d {{ .Home }} -s /bin/bash {{ .User }}
+ENV HOME={{ .Home }}
+
+# ============================================
+# Patch s6 services and desktop session launchers
+# to run as {{ .User }} instead of the built-in abc user.
+# Uses word-boundary replacement so every reference is covered:
+# s6-setuidgid, chown/lsiown ownership, pgrep -u, id -u/G,
+# group ownership (root:abc), xdg-runtime paths, etc.
+# ============================================
+RUN find /etc/s6-overlay/s6-rc.d/ -type f -name "run" \
+      -exec sed -i 's/\babc\b/{{ .User }}/g' {} + && \
+    find /defaults/ -maxdepth 1 -name "startwm*.sh" \
+      -exec sed -i 's/\babc\b/{{ .User }}/g' {} +
+
+# ============================================
+# Fix home directory ownership after UID/GID remapping.
+# init-adduser remaps the UID/GID of {{ .User }} at container
+# startup but does not chown the home directory. This cont-init
+# script runs after init-adduser and before any services to
+# ensure {{ .Home }} is owned by the correct UID/GID.
+# ============================================
+RUN mkdir -p /custom-cont-init.d && \
+    printf '#!/usr/bin/with-contenv bash\nmkdir -p {{ .Home }}\nchown -R {{ .User }}:{{ .User }} {{ .Home }}\n' \
+      > /custom-cont-init.d/01-desktopus-home.sh && \
+    chmod +x /custom-cont-init.d/01-desktopus-home.sh
+{{- end }}
 
 # ============================================
 # Ansible provisioning

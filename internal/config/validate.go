@@ -8,6 +8,7 @@ import (
 )
 
 var validName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$`)
+var validLinuxUsername = regexp.MustCompile(`^[a-z_][a-z0-9_-]*$`)
 
 // compatMatrix maps each supported OS to its available desktop environments.
 // This reflects the actual linuxserver/webtop image tags.
@@ -54,6 +55,20 @@ func ValidateDesktop(cfg *DesktopConfig) error {
 		errs = append(errs, fmt.Sprintf("name %q must be DNS-safe: lowercase alphanumeric and hyphens", cfg.Name))
 	}
 
+	if cfg.User != "" {
+		if cfg.User == "root" {
+			errs = append(errs, "user must not be 'root'")
+		} else if !validLinuxUsername.MatchString(cfg.User) {
+			errs = append(errs, fmt.Sprintf("user %q is not a valid Linux username (must match [a-z_][a-z0-9_-]*)", cfg.User))
+		} else if len(cfg.User) > 32 {
+			errs = append(errs, fmt.Sprintf("user %q exceeds maximum length of 32 characters", cfg.User))
+		}
+	}
+
+	if cfg.Home != "" && !strings.HasPrefix(cfg.Home, "/") {
+		errs = append(errs, fmt.Sprintf("home %q must be an absolute path", cfg.Home))
+	}
+
 	desktops := compatMatrix[cfg.Base.OS]
 
 	if cfg.Base.OS == "" {
@@ -81,8 +96,8 @@ func ValidateDesktop(cfg *DesktopConfig) error {
 		if pr.Script == "" {
 			errs = append(errs, fmt.Sprintf("postrun[%d]: script is required", i))
 		}
-		if pr.RunAs != "" && pr.RunAs != "root" && pr.RunAs != "abc" {
-			errs = append(errs, fmt.Sprintf("postrun[%d]: runas must be 'root' or 'abc'", i))
+		if pr.RunAs != "" && pr.RunAs != "root" && pr.RunAs != cfg.EffectiveUser() {
+			errs = append(errs, fmt.Sprintf("postrun[%d]: runas must be 'root' or '%s'", i, cfg.EffectiveUser()))
 		}
 	}
 

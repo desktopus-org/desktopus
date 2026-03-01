@@ -2,8 +2,8 @@
 - hosts: localhost
   become: true
   vars:
-    desktopus_user: abc
-    desktopus_home: /config
+    desktopus_user: {{ .User }}
+    desktopus_home: {{ .Home }}
 {{ range .Modules }}
   # --- Module: {{ .Name }} ---
 {{ range $k, $v := .Vars }}    {{ $k }}: {{ $v }}

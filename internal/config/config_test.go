@@ -292,7 +292,8 @@ func TestValidateDesktopPostRunInvalidRunAs(t *testing.T) {
 }
 
 func TestValidateDesktopPostRunValidRunAs(t *testing.T) {
-	for _, runas := range []string{"", "root", "abc"} {
+	// Default user is "desktopus" when no user is set
+	for _, runas := range []string{"", "root", "desktopus"} {
 		cfg := &DesktopConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
@@ -303,6 +304,18 @@ func TestValidateDesktopPostRunValidRunAs(t *testing.T) {
 		if err := ValidateDesktop(cfg); err != nil {
 			t.Errorf("runas %q should be valid: %v", runas, err)
 		}
+	}
+	// Custom user: runas must match the configured user
+	cfg := &DesktopConfig{
+		Name: "test",
+		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+		User: "carlos",
+		PostRun: []PostRunScript{
+			{Name: "setup", Script: "echo hi", RunAs: "carlos"},
+		},
+	}
+	if err := ValidateDesktop(cfg); err != nil {
+		t.Errorf("runas 'carlos' should be valid for user 'carlos': %v", err)
 	}
 }
 
@@ -523,6 +536,91 @@ server:
 	}
 	if cfg.Server.Port != 9999 {
 		t.Errorf("expected port 9999, got %d", cfg.Server.Port)
+	}
+}
+
+// --- Custom user validation ---
+
+func TestValidateDesktopCustomUser(t *testing.T) {
+	for _, user := range []string{"carlos", "my_user", "x"} {
+		cfg := &DesktopConfig{
+			Name: "test",
+			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+			User: user,
+		}
+		if err := ValidateDesktop(cfg); err != nil {
+			t.Errorf("user %q should be valid: %v", user, err)
+		}
+	}
+}
+
+func TestValidateDesktopInvalidUser(t *testing.T) {
+	tests := []struct {
+		user string
+		desc string
+	}{
+		{"root", "root is reserved"},
+		{"Root", "uppercase not allowed"},
+		{"my user", "spaces not allowed"},
+		{strings.Repeat("a", 33), "exceeds 32 chars"},
+	}
+	for _, tt := range tests {
+		cfg := &DesktopConfig{
+			Name: "test",
+			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+			User: tt.user,
+		}
+		if err := ValidateDesktop(cfg); err == nil {
+			t.Errorf("user %q (%s) should be invalid", tt.user, tt.desc)
+		}
+	}
+}
+
+func TestValidateDesktopCustomHome(t *testing.T) {
+	// Valid absolute paths
+	for _, home := range []string{"/home/carlos", "/workspace", "/"} {
+		cfg := &DesktopConfig{
+			Name: "test",
+			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+			Home: home,
+		}
+		if err := ValidateDesktop(cfg); err != nil {
+			t.Errorf("home %q should be valid: %v", home, err)
+		}
+	}
+	// Invalid: relative path
+	cfg := &DesktopConfig{
+		Name: "test",
+		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+		Home: "home/carlos",
+	}
+	if err := ValidateDesktop(cfg); err == nil {
+		t.Error("relative home path should be invalid")
+	}
+}
+
+// --- EffectiveUser / EffectiveHome ---
+
+func TestEffectiveUserHome(t *testing.T) {
+	tests := []struct {
+		user     string
+		home     string
+		wantUser string
+		wantHome string
+	}{
+		{"", "", "desktopus", "/home/desktopus"},
+		{"abc", "", "abc", "/config"},
+		{"carlos", "", "carlos", "/home/carlos"},
+		{"carlos", "/workspace", "carlos", "/workspace"},
+	}
+	for _, tt := range tests {
+		cfg := &DesktopConfig{User: tt.user, Home: tt.home}
+		if got := cfg.EffectiveUser(); got != tt.wantUser {
+			t.Errorf("user=%q home=%q: EffectiveUser()=%q, want %q", tt.user, tt.home, got, tt.wantUser)
+		}
+		if got := cfg.EffectiveHome(); got != tt.wantHome {
+			t.Errorf("user=%q home=%q: EffectiveHome()=%q, want %q", tt.user, tt.home, got, tt.wantHome)
+		}
 	}
 }
 

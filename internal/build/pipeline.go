@@ -70,7 +70,7 @@ func (p *Pipeline) Build(ctx context.Context, cfg *config.DesktopConfig, configD
 	if err != nil {
 		return err
 	}
-	playbook, err := generatePlaybook(playbookTmpl, modules, varsOverrides, cfg.Base.OS)
+	playbook, err := generatePlaybook(playbookTmpl, modules, varsOverrides, cfg.Base.OS, cfg.EffectiveUser(), cfg.EffectiveHome())
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func addPostRunScripts(bctx *BuildContext, cfg *config.DesktopConfig) error {
 	for i, pr := range cfg.PostRun {
 		runas := pr.RunAs
 		if runas == "" {
-			runas = "abc"
+			runas = cfg.EffectiveUser()
 		}
 
 		var script string
@@ -242,7 +242,8 @@ func addRuntimeFiles(bctx *BuildContext, cfg *config.DesktopConfig) error {
 		}
 		script += fmt.Sprintf("mkdir -p \"$(dirname '%s')\"\n", f.Path)
 		script += fmt.Sprintf("envsubst < '/tmp/desktopus-runtime-files%s' > '%s'\n", f.Path, f.Path)
-		script += fmt.Sprintf("chown abc:abc '%s'\n", f.Path)
+		user := cfg.EffectiveUser()
+		script += fmt.Sprintf("chown %s:%s '%s'\n", user, user, f.Path)
 		script += fmt.Sprintf("chmod %s '%s'\n\n", mode, f.Path)
 	}
 

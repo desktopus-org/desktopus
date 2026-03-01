@@ -19,6 +19,8 @@ type Module struct {
 
 	// OSTaskFiles maps OS names to true if tasks/<os>.yml exists
 	OSTaskFiles map[string]bool `yaml:"-"`
+
+	SmokeTest *SmokeTest `yaml:"smoke_test,omitempty"`
 }
 
 // Compatibility defines which OS/desktop/arch combos a module supports
@@ -26,6 +28,25 @@ type Compatibility struct {
 	OS      []string `yaml:"os,omitempty"`
 	Desktop []string `yaml:"desktop,omitempty"`
 	Arch    []string `yaml:"arch,omitempty"`
+}
+
+// SmokeTest defines commands to run inside a built image to verify the module works.
+// Each entry is a separate command. Default is used for all OSes unless an OS-specific
+// override is present.
+type SmokeTest struct {
+	Default [][]string            `yaml:"default,omitempty"`
+	OS      map[string][][]string `yaml:"os,omitempty"`
+}
+
+// SmokeCmds returns the smoke test commands for the given OS, or nil if none are defined.
+func (m *Module) SmokeCmds(targetOS string) [][]string {
+	if m.SmokeTest == nil {
+		return nil
+	}
+	if cmds, ok := m.SmokeTest.OS[targetOS]; ok {
+		return cmds
+	}
+	return m.SmokeTest.Default
 }
 
 // Var defines a module variable

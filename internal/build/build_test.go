@@ -858,6 +858,9 @@ func TestGenerateDockerfileDefaultUser(t *testing.T) {
 	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/desktopus -s /bin/bash desktopus") {
 		t.Errorf("expected useradd for default user, got:\n%s", dockerfile)
 	}
+	if !strings.Contains(dockerfile, "ENV HOME=/home/desktopus") {
+		t.Errorf("expected ENV HOME override for default user, got:\n%s", dockerfile)
+	}
 	if !strings.Contains(dockerfile, `s/\babc\b/desktopus/g`) {
 		t.Errorf("expected word-boundary sed patch for desktopus, got:\n%s", dockerfile)
 	}
@@ -885,6 +888,9 @@ func TestGenerateDockerfileAbcUser(t *testing.T) {
 	if strings.Contains(dockerfile, "RUN useradd") {
 		t.Error("abc user should not emit RUN useradd (built-in user)")
 	}
+	if strings.Contains(dockerfile, "ENV HOME") {
+		t.Error("abc user should not override ENV HOME (keep base image /config)")
+	}
 	if strings.Contains(dockerfile, "sed -i") {
 		t.Error("abc user should not emit s6 patching")
 	}
@@ -911,6 +917,9 @@ func TestGenerateDockerfileCustomUser(t *testing.T) {
 	dockerfile := string(result)
 	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/carlos -s /bin/bash carlos") {
 		t.Errorf("expected useradd for custom user, got:\n%s", dockerfile)
+	}
+	if !strings.Contains(dockerfile, "ENV HOME=/home/carlos") {
+		t.Errorf("expected ENV HOME override for custom user, got:\n%s", dockerfile)
 	}
 	if !strings.Contains(dockerfile, `s/\babc\b/carlos/g`) {
 		t.Errorf("expected word-boundary sed patch for carlos, got:\n%s", dockerfile)

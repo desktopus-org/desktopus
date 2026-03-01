@@ -8,6 +8,7 @@ FROM {{ .BaseImage }}
 # Create desktop user
 # ============================================
 RUN useradd -m -d {{ .Home }} -s /bin/bash {{ .User }}
+ENV HOME={{ .Home }}
 
 # ============================================
 # Patch s6 services and desktop session launchers

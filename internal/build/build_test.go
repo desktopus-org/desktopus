@@ -183,9 +183,9 @@ func TestGenerateDockerfile(t *testing.T) {
 	if !strings.Contains(dockerfile, `org.desktopus.name="test-desktop"`) {
 		t.Error("missing name label")
 	}
-	// No post-run scripts, so should NOT have the section
-	if strings.Contains(dockerfile, "custom-cont-init.d") {
-		t.Error("should not have post-run section without post-run scripts")
+	// No post-run scripts, so should NOT have the COPY postrun/ section
+	if strings.Contains(dockerfile, "COPY postrun/") {
+		t.Error("should not have post-run COPY section without post-run scripts")
 	}
 	// Ubuntu should use apt-get and python3-apt
 	if !strings.Contains(dockerfile, "apt-get") {
@@ -864,6 +864,9 @@ func TestGenerateDockerfileDefaultUser(t *testing.T) {
 	if !strings.Contains(dockerfile, `s/\babc\b/desktopus/g`) {
 		t.Errorf("expected word-boundary sed patch for desktopus, got:\n%s", dockerfile)
 	}
+	if !strings.Contains(dockerfile, "01-desktopus-home.sh") {
+		t.Errorf("expected home ownership fix script, got:\n%s", dockerfile)
+	}
 }
 
 func TestGenerateDockerfileAbcUser(t *testing.T) {
@@ -893,6 +896,9 @@ func TestGenerateDockerfileAbcUser(t *testing.T) {
 	}
 	if strings.Contains(dockerfile, "sed -i") {
 		t.Error("abc user should not emit s6 patching")
+	}
+	if strings.Contains(dockerfile, "01-desktopus-home.sh") {
+		t.Error("abc user should not emit home ownership fix script")
 	}
 }
 

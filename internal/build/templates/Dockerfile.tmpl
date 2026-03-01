@@ -2,6 +2,13 @@
 # Desktop: {{ .Name }}
 
 FROM {{ .BaseImage }}
+{{- if .CreateUser }}
+
+# ============================================
+# Create desktop user
+# ============================================
+RUN useradd -m -d {{ .Home }} -s /bin/bash {{ .User }}
+{{- end }}
 
 # ============================================
 # Ansible provisioning

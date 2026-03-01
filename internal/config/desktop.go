@@ -6,12 +6,39 @@ import "fmt"
 type DesktopConfig struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description,omitempty"`
+	User        string            `yaml:"user,omitempty"`
+	Home        string            `yaml:"home,omitempty"`
 	Base        BaseSpec          `yaml:"base"`
 	Modules     []ModuleRef       `yaml:"modules,omitempty"`
 	Env         map[string]EnvVar `yaml:"env,omitempty"`
 	PostRun     []PostRunScript   `yaml:"postrun,omitempty"`
 	Files       []FileSpec        `yaml:"files,omitempty"`
 	Runtime     RuntimeSpec       `yaml:"runtime,omitempty"`
+}
+
+// EffectiveUser returns the resolved Linux username for this desktop.
+// If user is "abc", returns "abc" (the built-in linuxserver/webtop user).
+// If user is unset, defaults to "desktopus".
+// Otherwise returns the configured user.
+func (d *DesktopConfig) EffectiveUser() string {
+	if d.User == "" {
+		return "desktopus"
+	}
+	return d.User
+}
+
+// EffectiveHome returns the resolved home directory for this desktop.
+// If user is "abc", returns "/config" (the built-in linuxserver/webtop home).
+// If home is explicitly set, returns that value.
+// Otherwise returns "/home/<effective-user>".
+func (d *DesktopConfig) EffectiveHome() string {
+	if d.User == "abc" {
+		return "/config"
+	}
+	if d.Home != "" {
+		return d.Home
+	}
+	return "/home/" + d.EffectiveUser()
 }
 
 // BaseSpec defines the OS and desktop environment
@@ -75,7 +102,7 @@ type EnvVar struct {
 // PostRunScript defines a script that runs at container startup via s6
 type PostRunScript struct {
 	Name   string `yaml:"name"`
-	RunAs  string `yaml:"runas,omitempty"` // "root" or "abc" (default: "abc")
+	RunAs  string `yaml:"runas,omitempty"` // "root" or the configured user (default: configured user)
 	Script string `yaml:"script"`
 }
 

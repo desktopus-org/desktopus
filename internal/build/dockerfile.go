@@ -19,6 +19,9 @@ type dockerfileData struct {
 	AnsibleVerbosity int
 	PostRunScripts   bool
 	RuntimeFiles     bool
+	CreateUser       bool
+	User             string
+	Home             string
 }
 
 // generateDockerfile renders the Dockerfile from the template and config
@@ -44,6 +47,9 @@ func generateDockerfile(tmpl *template.Template, cfg *config.DesktopConfig, modu
 		AnsibleVerbosity: ansibleVerbosity,
 		PostRunScripts:   len(cfg.PostRun) > 0,
 		RuntimeFiles:     len(cfg.Files) > 0,
+		CreateUser:       cfg.EffectiveUser() != "abc",
+		User:             cfg.EffectiveUser(),
+		Home:             cfg.EffectiveHome(),
 	}
 
 	var buf bytes.Buffer

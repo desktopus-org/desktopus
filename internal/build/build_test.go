@@ -426,7 +426,7 @@ func TestGeneratePlaybook(t *testing.T) {
 		{"chrome_channel": "beta"},
 	}
 
-	result, err := generatePlaybook(tmpl, modules, overrides, "ubuntu")
+	result, err := generatePlaybook(tmpl, modules, overrides, "ubuntu", "desktopus", "/home/desktopus")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
@@ -462,7 +462,7 @@ func TestGeneratePlaybookDefaults(t *testing.T) {
 	}
 
 	// No overrides
-	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu")
+	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu", "desktopus", "/home/desktopus")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
@@ -492,7 +492,7 @@ func TestGeneratePlaybookOSSpecificTaskFile(t *testing.T) {
 		},
 	}
 
-	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu")
+	result, err := generatePlaybook(tmpl, modules, nil, "ubuntu", "desktopus", "/home/desktopus")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
@@ -525,7 +525,7 @@ func TestGeneratePlaybookOSFallback(t *testing.T) {
 	}
 
 	// Building for fedora, but chrome only has ubuntu-specific tasks
-	result, err := generatePlaybook(tmpl, modules, nil, "fedora")
+	result, err := generatePlaybook(tmpl, modules, nil, "fedora", "desktopus", "/home/desktopus")
 	if err != nil {
 		t.Fatalf("generatePlaybook: %v", err)
 	}
@@ -620,9 +620,9 @@ func TestAddPostRunScriptsDefaultRunAs(t *testing.T) {
 	}
 
 	data, _ := io.ReadAll(tr)
-	// Default should be "abc"
-	if !strings.Contains(string(data), "s6-setuidgid abc") {
-		t.Errorf("default runas should be abc, script: %s", string(data))
+	// Default should be "desktopus" (effective user when no user is set)
+	if !strings.Contains(string(data), "s6-setuidgid desktopus") {
+		t.Errorf("default runas should be desktopus, script: %s", string(data))
 	}
 	if header.Mode != 0755 {
 		t.Errorf("expected mode 0755, got %o", header.Mode)
@@ -831,6 +831,196 @@ func TestStreamBuildOutputPullProgress(t *testing.T) {
 	// Regular stream events must still appear
 	if !strings.Contains(got, "Step 1/9") {
 		t.Error("missing stream output")
+	}
+}
+
+// --- generateDockerfile user creation ---
+
+func TestGenerateDockerfileDefaultUser(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "test",
+		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+		// User omitted → creates "desktopus" with home "/home/desktopus"
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/desktopus -s /bin/bash desktopus") {
+		t.Errorf("expected useradd for default user, got:\n%s", dockerfile)
+	}
+}
+
+func TestGenerateDockerfileAbcUser(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "test",
+		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+		User: "abc",
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	if strings.Contains(string(result), "RUN useradd") {
+		t.Error("abc user should not emit RUN useradd (built-in user)")
+	}
+}
+
+func TestGenerateDockerfileCustomUser(t *testing.T) {
+	tmplFuncs := templateFuncs()
+	tmpl, err := template.New("Dockerfile.tmpl").Funcs(tmplFuncs).ParseFS(templatesFS, "templates/Dockerfile.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	cfg := &config.DesktopConfig{
+		Name: "test",
+		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
+		User: "carlos",
+	}
+
+	result, err := generateDockerfile(tmpl, cfg, nil, 0)
+	if err != nil {
+		t.Fatalf("generateDockerfile: %v", err)
+	}
+
+	dockerfile := string(result)
+	if !strings.Contains(dockerfile, "RUN useradd -m -d /home/carlos -s /bin/bash carlos") {
+		t.Errorf("expected useradd for custom user, got:\n%s", dockerfile)
+	}
+}
+
+// --- generatePlaybook user/home ---
+
+func TestGeneratePlaybookDefaultUser(t *testing.T) {
+	tmpl, err := template.New("playbook.yml.tmpl").ParseFS(templatesFS, "templates/playbook.yml.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	result, err := generatePlaybook(tmpl, nil, nil, "ubuntu", "desktopus", "/home/desktopus")
+	if err != nil {
+		t.Fatalf("generatePlaybook: %v", err)
+	}
+
+	playbook := string(result)
+	if !strings.Contains(playbook, "desktopus_user: desktopus") {
+		t.Errorf("expected desktopus_user: desktopus, got:\n%s", playbook)
+	}
+	if !strings.Contains(playbook, "desktopus_home: /home/desktopus") {
+		t.Errorf("expected desktopus_home: /home/desktopus, got:\n%s", playbook)
+	}
+}
+
+func TestGeneratePlaybookCustomUser(t *testing.T) {
+	tmpl, err := template.New("playbook.yml.tmpl").ParseFS(templatesFS, "templates/playbook.yml.tmpl")
+	if err != nil {
+		t.Fatalf("parse template: %v", err)
+	}
+
+	result, err := generatePlaybook(tmpl, nil, nil, "ubuntu", "carlos", "/home/carlos")
+	if err != nil {
+		t.Fatalf("generatePlaybook: %v", err)
+	}
+
+	playbook := string(result)
+	if !strings.Contains(playbook, "desktopus_user: carlos") {
+		t.Errorf("expected desktopus_user: carlos, got:\n%s", playbook)
+	}
+	if !strings.Contains(playbook, "desktopus_home: /home/carlos") {
+		t.Errorf("expected desktopus_home: /home/carlos, got:\n%s", playbook)
+	}
+}
+
+// --- addPostRunScripts default user ---
+
+func TestAddPostRunScriptsDefaultUser(t *testing.T) {
+	bctx := NewBuildContext()
+	cfg := &config.DesktopConfig{
+		// User omitted → effective user is "desktopus"
+		PostRun: []config.PostRunScript{
+			{Name: "test", Script: "echo hi"},
+		},
+	}
+
+	if err := addPostRunScripts(bctx, cfg); err != nil {
+		t.Fatalf("addPostRunScripts: %v", err)
+	}
+
+	reader, err := bctx.Reader()
+	if err != nil {
+		t.Fatalf("Reader: %v", err)
+	}
+
+	tr := tar.NewReader(reader)
+	_, err = tr.Next()
+	if err != nil {
+		t.Fatalf("Next: %v", err)
+	}
+
+	data, _ := io.ReadAll(tr)
+	if !strings.Contains(string(data), "s6-setuidgid desktopus") {
+		t.Errorf("default runas should be desktopus, got:\n%s", string(data))
+	}
+}
+
+// --- addRuntimeFiles default user ---
+
+func TestAddRuntimeFilesDefaultUser(t *testing.T) {
+	bctx := NewBuildContext()
+	cfg := &config.DesktopConfig{
+		// User omitted → effective user is "desktopus"
+		Files: []config.FileSpec{
+			{Path: "/home/desktopus/.bashrc", Content: "# bashrc"},
+		},
+	}
+
+	if err := addRuntimeFiles(bctx, cfg); err != nil {
+		t.Fatalf("addRuntimeFiles: %v", err)
+	}
+
+	reader, err := bctx.Reader()
+	if err != nil {
+		t.Fatalf("Reader: %v", err)
+	}
+
+	tr := tar.NewReader(reader)
+	files := make(map[string]string)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("Next: %v", err)
+		}
+		data, _ := io.ReadAll(tr)
+		files[header.Name] = string(data)
+	}
+
+	script, ok := files["99-desktopus-files.sh"]
+	if !ok {
+		t.Fatal("missing 99-desktopus-files.sh")
+	}
+	if !strings.Contains(script, "chown desktopus:desktopus") {
+		t.Errorf("provisioner should use chown desktopus:desktopus, got:\n%s", script)
 	}
 }
 

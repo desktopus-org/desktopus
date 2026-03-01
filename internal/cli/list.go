@@ -24,7 +24,7 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer dockerClient.Close()
+		defer func() { _ = dockerClient.Close() }()
 
 		mgr := runtime.NewManager(dockerClient)
 		containers, err := mgr.List(context.Background(), listAll)
@@ -41,9 +41,9 @@ var listCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tIMAGE\tSTATUS\tPORTS")
+		_, _ = fmt.Fprintln(w, "NAME\tIMAGE\tSTATUS\tPORTS")
 		for _, c := range containers {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Name, c.Image, c.State, c.Ports)
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Name, c.Image, c.State, c.Ports)
 		}
 		return w.Flush()
 	},

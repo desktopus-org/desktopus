@@ -5,7 +5,7 @@ author: desktopus
 tags: [browser, web]
 
 compatibility:
-  os: [ubuntu, debian, fedora, el, arch, alpine]
+  os: [ubuntu, debian, fedora, el, arch]
   arch: [amd64]
 
 vars:
@@ -19,7 +19,3 @@ smoke_test:
   default:
     - ["/usr/local/bin/google-chrome", "--version"]
     - ["sh", "-c", "exec $(grep -m1 '^Exec=' /usr/share/applications/google-chrome.desktop | sed 's/^Exec=//;s/ %[A-Za-z]//g') --version"]
-  os:
-    alpine:
-      - ["/usr/local/bin/chromium", "--version"]
-      - ["sh", "-c", "exec $(grep -m1 '^Exec=' /usr/share/applications/chromium.desktop | sed 's/^Exec=//;s/ %[A-Za-z]//g') --version"]

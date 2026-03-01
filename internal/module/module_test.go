@@ -158,7 +158,21 @@ func TestLoadFromFSMissingTasks(t *testing.T) {
 
 	_, err := LoadFromFS(fsys, "mymod")
 	if err == nil {
-		t.Error("expected error for missing tasks/main.yml")
+		t.Error("expected error for missing tasks/main.yml when no compatibility.os set")
+	}
+}
+
+func TestLoadFromFSNoMainYmlWithCompatibleOS(t *testing.T) {
+	fsys := fstest.MapFS{
+		"mymod/module.yaml": &fstest.MapFile{
+			Data: []byte("name: mymod\ncompatibility:\n  os: [ubuntu]\n"),
+		},
+		"mymod/tasks/ubuntu.yml": &fstest.MapFile{Data: []byte("- name: ubuntu\n")},
+	}
+
+	_, err := LoadFromFS(fsys, "mymod")
+	if err != nil {
+		t.Errorf("unexpected error: modules with compatibility.os do not need tasks/main.yml: %v", err)
 	}
 }
 

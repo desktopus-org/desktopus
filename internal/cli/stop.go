@@ -27,7 +27,7 @@ var stopCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer dockerClient.Close()
+		defer func() { _ = dockerClient.Close() }()
 
 		mgr := runtime.NewManager(dockerClient)
 		ctx := context.Background()

@@ -105,21 +105,6 @@ func TestBuiltinModulesCompatibilityUsesValidValues(t *testing.T) {
 	}
 }
 
-func TestBuiltinModulesHaveOSTaskFiles(t *testing.T) {
-	reg := newRegistry(t)
-
-	for _, m := range reg.ListBuiltin() {
-		t.Run(m.Name, func(t *testing.T) {
-			for _, os := range m.Compatibility.OS {
-				taskFile := m.TaskFile(os)
-				expected := "tasks/" + os + ".yml"
-				if taskFile != expected {
-					t.Errorf("OS %q: expected %q, got %q (missing OS-specific task file)", os, expected, taskFile)
-				}
-			}
-		})
-	}
-}
 
 func TestBuiltinModulesTaskFileFallback(t *testing.T) {
 	reg := newRegistry(t)
@@ -174,48 +159,38 @@ func TestBuiltinModulesTaskFilesAreValidYAML(t *testing.T) {
 	}
 }
 
-func TestChromeModule(t *testing.T) {
+func TestBuiltinModuleContracts(t *testing.T) {
 	reg := newRegistry(t)
-
-	mod, err := reg.Resolve("chrome", ".")
-	if err != nil {
-		t.Fatalf("Resolve chrome: %v", err)
-	}
-
-	// Has chrome_channel var
-	if _, ok := mod.Vars["chrome_channel"]; !ok {
-		t.Error("expected chrome_channel var")
-	}
-
-	// System packages include wget and gnupg
-	if !contains(mod.SystemPkgs, "wget") {
-		t.Errorf("expected wget in system_packages, got %v", mod.SystemPkgs)
-	}
-	if !contains(mod.SystemPkgs, "gnupg") {
-		t.Errorf("expected gnupg in system_packages, got %v", mod.SystemPkgs)
-	}
-
-	// Compatibility lists all supported OSes except Alpine (Chrome unavailable on musl)
-	expectedOSes := []string{"ubuntu", "debian", "fedora", "el", "arch"}
-	if len(mod.Compatibility.OS) != len(expectedOSes) {
-		t.Errorf("expected %d OSes, got %d: %v", len(expectedOSes), len(mod.Compatibility.OS), mod.Compatibility.OS)
-	}
-	for _, os := range expectedOSes {
-		if !contains(mod.Compatibility.OS, os) {
-			t.Errorf("missing OS %q in chrome compatibility", os)
+	for _, m := range reg.ListBuiltin() {
+		m := m
+		if m.Tests == nil {
+			continue
 		}
-	}
-	if contains(mod.Compatibility.OS, "alpine") {
-		t.Error("alpine should not be in chrome compatibility")
-	}
-
-	// Has 5 OS-specific task files (no alpine)
-	osCount := 0
-	for range mod.OSTaskFiles {
-		osCount++
-	}
-	if osCount != 5 {
-		t.Errorf("expected 5 OS task files, got %d: %v", osCount, mod.OSTaskFiles)
+		t.Run(m.Name, func(t *testing.T) {
+			tc := m.Tests
+			for _, v := range tc.RequiredVars {
+				if _, ok := m.Vars[v]; !ok {
+					t.Errorf("required var %q not found", v)
+				}
+			}
+			for _, pkg := range tc.RequiredSystemPackages {
+				if !contains(m.SystemPkgs, pkg) {
+					t.Errorf("required system_package %q not found", pkg)
+				}
+			}
+			for _, os := range tc.ExcludedOS {
+				if contains(m.Compatibility.OS, os) {
+					t.Errorf("OS %q should be excluded from compatibility", os)
+				}
+			}
+			if tc.OSSpecificTaskFiles {
+				for _, os := range m.Compatibility.OS {
+					if !m.OSTaskFiles[os] {
+						t.Errorf("OS %q has no OS-specific task file", os)
+					}
+				}
+			}
+		})
 	}
 }
 

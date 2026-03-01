@@ -20,7 +20,7 @@ type Module struct {
 	// OSTaskFiles maps OS names to true if tasks/<os>.yml exists
 	OSTaskFiles map[string]bool `yaml:"-"`
 
-	SmokeTest *SmokeTest `yaml:"smoke_test,omitempty"`
+	Tests *ModuleTests `yaml:"tests,omitempty"`
 }
 
 // Compatibility defines which OS/desktop/arch combos a module supports
@@ -28,6 +28,15 @@ type Compatibility struct {
 	OS      []string `yaml:"os,omitempty"`
 	Desktop []string `yaml:"desktop,omitempty"`
 	Arch    []string `yaml:"arch,omitempty"`
+}
+
+// ModuleTests groups all test declarations for a module.
+type ModuleTests struct {
+	RequiredVars           []string   `yaml:"required_vars,omitempty"`
+	RequiredSystemPackages []string   `yaml:"required_system_packages,omitempty"`
+	ExcludedOS             []string   `yaml:"excluded_os,omitempty"`
+	OSSpecificTaskFiles    bool       `yaml:"os_specific_task_files,omitempty"`
+	Smoke                  *SmokeTest `yaml:"smoke,omitempty"`
 }
 
 // SmokeTest defines commands to run inside a built image to verify the module works.
@@ -40,13 +49,14 @@ type SmokeTest struct {
 
 // SmokeCmds returns the smoke test commands for the given OS, or nil if none are defined.
 func (m *Module) SmokeCmds(targetOS string) [][]string {
-	if m.SmokeTest == nil {
+	if m.Tests == nil || m.Tests.Smoke == nil {
 		return nil
 	}
-	if cmds, ok := m.SmokeTest.OS[targetOS]; ok {
+	smoke := m.Tests.Smoke
+	if cmds, ok := smoke.OS[targetOS]; ok {
 		return cmds
 	}
-	return m.SmokeTest.Default
+	return smoke.Default
 }
 
 // Var defines a module variable

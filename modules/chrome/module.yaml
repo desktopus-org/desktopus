@@ -1,0 +1,16 @@
+name: chrome
+description: "Google Chrome browser"
+version: "1.0.0"
+author: desktopus
+tags: [browser, web]
+
+compatibility:
+  os: [ubuntu, debian, fedora, el, arch, alpine]
+  arch: [amd64]
+
+vars:
+  chrome_channel:
+    default: "stable"
+    description: "Chrome release channel (stable, beta, unstable)"
+
+system_packages: [wget, gnupg]

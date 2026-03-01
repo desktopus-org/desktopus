@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  become: true
+  vars:
+    desktopus_user: abc
+    desktopus_home: /config
+{{ range .Modules }}
+  # --- Module: {{ .Name }} ---
+{{ range $k, $v := .Vars }}    {{ $k }}: {{ $v }}
+{{ end }}{{ end }}
+  tasks:
+{{- range .Modules }}
+    - name: "Include {{ .Name }} module"
+      ansible.builtin.include_tasks: "modules/{{ .Dir }}/{{ .TaskFile }}"
+{{- end }}

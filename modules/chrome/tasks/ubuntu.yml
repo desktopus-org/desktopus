@@ -1,0 +1,33 @@
+---
+- name: Add Google Chrome signing key
+  ansible.builtin.apt_key:
+    url: https://dl.google.com/linux/linux_signing_key.pub
+    state: present
+
+- name: Add Google Chrome repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+    state: present
+    filename: google-chrome
+
+- name: Install Google Chrome
+  ansible.builtin.apt:
+    name: "google-chrome-{{ chrome_channel | default('stable') }}"
+    state: present
+    update_cache: true
+
+- name: Ensure Desktop directory exists
+  ansible.builtin.file:
+    path: "{{ desktopus_home }}/Desktop"
+    state: directory
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+
+- name: Create desktop shortcut
+  ansible.builtin.copy:
+    src: /usr/share/applications/google-chrome.desktop
+    dest: "{{ desktopus_home }}/Desktop/google-chrome.desktop"
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+    remote_src: true
+  ignore_errors: true

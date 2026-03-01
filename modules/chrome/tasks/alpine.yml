@@ -1,0 +1,24 @@
+---
+# Google Chrome is not available for Alpine (musl-based).
+# Chromium is installed as the closest alternative.
+
+- name: Install Chromium
+  community.general.apk:
+    name: chromium
+    state: present
+
+- name: Ensure Desktop directory exists
+  ansible.builtin.file:
+    path: "{{ desktopus_home }}/Desktop"
+    state: directory
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+
+- name: Create desktop shortcut
+  ansible.builtin.copy:
+    src: /usr/share/applications/chromium.desktop
+    dest: "{{ desktopus_home }}/Desktop/chromium.desktop"
+    owner: "{{ desktopus_user }}"
+    mode: "0755"
+    remote_src: true
+  ignore_errors: true

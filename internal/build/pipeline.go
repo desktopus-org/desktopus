@@ -127,7 +127,7 @@ func (p *Pipeline) Build(ctx context.Context, cfg *config.DesktopConfig, configD
 	if err != nil {
 		return fmt.Errorf("starting build: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// 9. Stream build output
 	return streamBuildOutput(resp.Body, output)

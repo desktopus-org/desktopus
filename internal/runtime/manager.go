@@ -76,11 +76,11 @@ func (m *Manager) Run(ctx context.Context, cfg *DesktopRunConfig, opts RunOption
 
 	if cfg.Memory != "" {
 		if mem := parseSize(cfg.Memory); mem > 0 {
-			hostCfg.Resources.Memory = mem
+			hostCfg.Memory = mem
 		}
 	}
 	if cfg.CPUs > 0 {
-		hostCfg.Resources.NanoCPUs = int64(cfg.CPUs) * 1e9
+		hostCfg.NanoCPUs = int64(cfg.CPUs) * 1e9
 	}
 
 	if cfg.GPU || opts.GPU {
@@ -123,7 +123,7 @@ func (m *Manager) pullIfMissing(ctx context.Context, image string, output io.Wri
 	if err != nil {
 		return fmt.Errorf("pulling image %s: %w", image, err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	return streamPullOutput(rc, output)
 }

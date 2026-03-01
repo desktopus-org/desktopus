@@ -24,7 +24,7 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer dockerClient.Close()
+		defer func() { _ = dockerClient.Close() }()
 
 		mgr := runtime.NewManager(dockerClient)
 		containers, err := mgr.List(context.Background(), listAll)

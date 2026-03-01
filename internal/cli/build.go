@@ -49,7 +49,7 @@ var buildCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer dockerClient.Close()
+		defer func() { _ = dockerClient.Close() }()
 
 		// Create module registry
 		registry, err := module.NewRegistry(modules.BuiltinFS)

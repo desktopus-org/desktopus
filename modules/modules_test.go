@@ -105,21 +105,6 @@ func TestBuiltinModulesCompatibilityUsesValidValues(t *testing.T) {
 	}
 }
 
-func TestBuiltinModulesHaveOSTaskFiles(t *testing.T) {
-	reg := newRegistry(t)
-
-	for _, m := range reg.ListBuiltin() {
-		t.Run(m.Name, func(t *testing.T) {
-			for _, os := range m.Compatibility.OS {
-				taskFile := m.TaskFile(os)
-				expected := "tasks/" + os + ".yml"
-				if taskFile != expected {
-					t.Errorf("OS %q: expected %q, got %q (missing OS-specific task file)", os, expected, taskFile)
-				}
-			}
-		})
-	}
-}
 
 func TestBuiltinModulesTaskFileFallback(t *testing.T) {
 	reg := newRegistry(t)

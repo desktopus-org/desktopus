@@ -25,7 +25,7 @@ type dockerfileData struct {
 }
 
 // generateDockerfile renders the Dockerfile from the template and config
-func generateDockerfile(tmpl *template.Template, cfg *config.DesktopConfig, modules []*module.Module, ansibleVerbosity int) ([]byte, error) {
+func generateDockerfile(tmpl *template.Template, cfg *config.ImageConfig, modules []*module.Module, ansibleVerbosity int) ([]byte, error) {
 	// Collect all system packages from modules
 	pkgSet := make(map[string]bool)
 	for _, mod := range modules {

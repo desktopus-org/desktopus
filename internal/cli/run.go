@@ -35,18 +35,24 @@ var runCmd = &cobra.Command{
 			file = "."
 		}
 
-		configPath, err := config.FindDesktopConfig(file)
+		configPath, err := config.FindImageConfig(file)
 		if err != nil {
 			return err
 		}
 
-		cfg, err := config.LoadDesktop(configPath)
+		img, err := config.LoadImage(configPath)
+		if err != nil {
+			return err
+		}
+
+		runtimePath := config.FindRuntimeConfig(configPath)
+		rt, err := config.LoadRuntime(runtimePath)
 		if err != nil {
 			return err
 		}
 
 		// Validate required env vars
-		if err := validateRequiredEnv(cfg, runEnvs); err != nil {
+		if err := validateRequiredEnv(img, rt, runEnvs); err != nil {
 			return err
 		}
 
@@ -78,18 +84,18 @@ var runCmd = &cobra.Command{
 			Remove:  runRemove,
 		}
 
-		// Build the runtime config from the desktop config
-		runCfg := toDesktopRunConfig(cfg)
+		// Build the runtime config from the image and runtime configs
+		runCfg := toDesktopRunConfig(img, rt)
 
 		containerID, err := mgr.Run(context.Background(), runCfg, opts, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("failed to run desktop: %w", err)
 		}
 
-		fmt.Printf("Desktop %q running (container: %s)\n", cfg.Name, containerID[:12])
+		fmt.Printf("Desktop %q running (container: %s)\n", img.Name, containerID[:12])
 
 		// Find the web port
-		webPort := findWebPort(cfg)
+		webPort := findWebPort(rt)
 		if webPort != "" {
 			fmt.Printf("  Web: http://localhost:%s\n", webPort)
 		}
@@ -109,18 +115,18 @@ func init() {
 	runCmd.Flags().BoolVar(&runRemove, "rm", false, "remove container when stopped")
 }
 
-func validateRequiredEnv(cfg *config.DesktopConfig, cliEnvs []string) error {
+func validateRequiredEnv(img *config.ImageConfig, rt *config.RuntimeConfig, cliEnvs []string) error {
 	provided := make(map[string]bool)
 
 	// From defaults
-	for name, spec := range cfg.Env {
+	for name, spec := range img.Env {
 		if spec.Default != "" {
 			provided[name] = true
 		}
 	}
 
-	// From runtime.env
-	for k := range cfg.Runtime.Env {
+	// From runtime env
+	for k := range rt.Env {
 		provided[k] = true
 	}
 
@@ -133,7 +139,7 @@ func validateRequiredEnv(cfg *config.DesktopConfig, cliEnvs []string) error {
 	}
 
 	var missing []string
-	for name, spec := range cfg.Env {
+	for name, spec := range img.Env {
 		if spec.Required && !provided[name] {
 			missing = append(missing, name)
 		}
@@ -145,8 +151,8 @@ func validateRequiredEnv(cfg *config.DesktopConfig, cliEnvs []string) error {
 	return nil
 }
 
-func findWebPort(cfg *config.DesktopConfig) string {
-	for _, p := range cfg.Runtime.Ports {
+func findWebPort(rt *config.RuntimeConfig) string {
+	for _, p := range rt.Ports {
 		parts := strings.SplitN(p, ":", 2)
 		if len(parts) == 2 && parts[1] == "3000" {
 			return parts[0]
@@ -155,30 +161,30 @@ func findWebPort(cfg *config.DesktopConfig) string {
 	return ""
 }
 
-// toDesktopRunConfig converts a DesktopConfig into a runtime DesktopRunConfig
-func toDesktopRunConfig(cfg *config.DesktopConfig) *runtime.DesktopRunConfig {
+// toDesktopRunConfig converts ImageConfig + RuntimeConfig into a runtime DesktopRunConfig
+func toDesktopRunConfig(img *config.ImageConfig, rt *config.RuntimeConfig) *runtime.DesktopRunConfig {
 	env := make(map[string]string)
-	for name, spec := range cfg.Env {
+	for name, spec := range img.Env {
 		if spec.Default != "" {
 			env[name] = spec.Default
 		}
 	}
-	for k, v := range cfg.Runtime.Env {
+	for k, v := range rt.Env {
 		env[k] = v
 	}
 
 	return &runtime.DesktopRunConfig{
-		Name:     cfg.Name,
-		ImageTag: cfg.ImageTag(),
-		Hostname: cfg.Runtime.Hostname,
-		ShmSize:  cfg.Runtime.ShmSize,
-		Ports:    cfg.Runtime.Ports,
-		Volumes:  cfg.Runtime.Volumes,
-		GPU:      cfg.Runtime.GPU,
-		Memory:   cfg.Runtime.Memory,
-		CPUs:     cfg.Runtime.CPUs,
-		Restart:  cfg.Runtime.Restart,
-		Network:  cfg.Runtime.Network,
+		Name:     img.Name,
+		ImageTag: img.ImageTag(),
+		Hostname: rt.Hostname,
+		ShmSize:  rt.ShmSize,
+		Ports:    rt.Ports,
+		Volumes:  rt.Volumes,
+		GPU:      rt.GPU,
+		Memory:   rt.Memory,
+		CPUs:     rt.CPUs,
+		Restart:  rt.Restart,
+		Network:  rt.Network,
 		Env:      env,
 	}
 }

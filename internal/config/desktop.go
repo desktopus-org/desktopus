@@ -2,8 +2,8 @@ package config
 
 import "fmt"
 
-// DesktopConfig is the top-level structure for desktopus.yaml
-type DesktopConfig struct {
+// ImageConfig is the top-level structure for desktopus.yaml
+type ImageConfig struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description,omitempty"`
 	User        string            `yaml:"user,omitempty"`
@@ -13,14 +13,13 @@ type DesktopConfig struct {
 	Env         map[string]EnvVar `yaml:"env,omitempty"`
 	PostRun     []PostRunScript   `yaml:"postrun,omitempty"`
 	Files       []FileSpec        `yaml:"files,omitempty"`
-	Runtime     RuntimeSpec       `yaml:"runtime,omitempty"`
 }
 
 // EffectiveUser returns the resolved Linux username for this desktop.
 // If user is "abc", returns "abc" (the built-in linuxserver/webtop user).
 // If user is unset, defaults to "desktopus".
 // Otherwise returns the configured user.
-func (d *DesktopConfig) EffectiveUser() string {
+func (d *ImageConfig) EffectiveUser() string {
 	if d.User == "" {
 		return "desktopus"
 	}
@@ -31,7 +30,7 @@ func (d *DesktopConfig) EffectiveUser() string {
 // If user is "abc", returns "/config" (the built-in linuxserver/webtop home).
 // If home is explicitly set, returns that value.
 // Otherwise returns "/home/<effective-user>".
-func (d *DesktopConfig) EffectiveHome() string {
+func (d *ImageConfig) EffectiveHome() string {
 	if d.User == "abc" {
 		return "/config"
 	}
@@ -113,21 +112,21 @@ type FileSpec struct {
 	Mode    string `yaml:"mode,omitempty"` // default "0644"
 }
 
-// RuntimeSpec defines container runtime configuration
-type RuntimeSpec struct {
+// RuntimeConfig defines container runtime configuration (desktopus.runtime.yaml)
+type RuntimeConfig struct {
 	Hostname string            `yaml:"hostname,omitempty"`
 	ShmSize  string            `yaml:"shm_size,omitempty"`
-	Ports    []string          `yaml:"ports,omitempty"`    // "host:container"
-	Volumes  []string          `yaml:"volumes,omitempty"`  // "host:container[:ro]"
+	Ports    []string          `yaml:"ports,omitempty"`   // "host:container"
+	Volumes  []string          `yaml:"volumes,omitempty"` // "host:container[:ro]"
 	GPU      bool              `yaml:"gpu,omitempty"`
 	Memory   string            `yaml:"memory,omitempty"`
 	CPUs     int               `yaml:"cpus,omitempty"`
-	Restart  string            `yaml:"restart,omitempty"`  // no | always | unless-stopped
+	Restart  string            `yaml:"restart,omitempty"` // no | always | unless-stopped
 	Network  string            `yaml:"network,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
 }
 
 // ImageTag returns the desktopus image tag for this desktop
-func (d *DesktopConfig) ImageTag() string {
+func (d *ImageConfig) ImageTag() string {
 	return fmt.Sprintf("desktopus/%s:latest", d.Name)
 }

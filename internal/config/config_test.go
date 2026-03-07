@@ -43,10 +43,10 @@ func TestImageRefCustomTag(t *testing.T) {
 	}
 }
 
-// --- DesktopConfig.ImageTag ---
+// --- ImageConfig.ImageTag ---
 
 func TestImageTag(t *testing.T) {
-	cfg := DesktopConfig{Name: "my-desktop"}
+	cfg := ImageConfig{Name: "my-desktop"}
 	want := "desktopus/my-desktop:latest"
 	if got := cfg.ImageTag(); got != want {
 		t.Errorf("ImageTag() = %q, want %q", got, want)
@@ -133,33 +133,33 @@ modules:
 	}
 }
 
-// --- ValidateDesktop ---
+// --- ValidateImage ---
 
-func TestValidateDesktopValid(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageValid(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "my-desktop",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 	}
-	if err := ValidateDesktop(cfg); err != nil {
+	if err := ValidateImage(cfg); err != nil {
 		t.Errorf("expected valid config, got: %v", err)
 	}
 }
 
-func TestValidateDesktopSingleCharName(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageSingleCharName(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "x",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 	}
-	if err := ValidateDesktop(cfg); err != nil {
+	if err := ValidateImage(cfg); err != nil {
 		t.Errorf("single-char name should be valid: %v", err)
 	}
 }
 
-func TestValidateDesktopMissingName(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageMissingName(t *testing.T) {
+	cfg := &ImageConfig{
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for missing name")
 	}
@@ -168,7 +168,7 @@ func TestValidateDesktopMissingName(t *testing.T) {
 	}
 }
 
-func TestValidateDesktopInvalidName(t *testing.T) {
+func TestValidateImageInvalidName(t *testing.T) {
 	tests := []string{
 		"My-Desktop",  // uppercase
 		"-bad",        // starts with hyphen
@@ -177,22 +177,22 @@ func TestValidateDesktopInvalidName(t *testing.T) {
 		"under_score", // underscore
 	}
 	for _, name := range tests {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: name,
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		}
-		if err := ValidateDesktop(cfg); err == nil {
+		if err := ValidateImage(cfg); err == nil {
 			t.Errorf("expected error for name %q", name)
 		}
 	}
 }
 
-func TestValidateDesktopInvalidOS(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageInvalidOS(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "windows", Desktop: "xfce"},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for invalid OS")
 	}
@@ -201,47 +201,47 @@ func TestValidateDesktopInvalidOS(t *testing.T) {
 	}
 }
 
-func TestValidateDesktopInvalidDesktopEnv(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageInvalidDesktopEnv(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "gnome"},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for invalid desktop")
 	}
 }
 
-func TestValidateDesktopAllValidOS(t *testing.T) {
+func TestValidateImageAllValidOS(t *testing.T) {
 	for _, os := range []string{"ubuntu", "debian", "fedora", "arch", "alpine", "el"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: os, Desktop: "xfce"},
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("OS %q should be valid: %v", os, err)
 		}
 	}
 }
 
-func TestValidateDesktopAllValidDesktops(t *testing.T) {
+func TestValidateImageAllValidDesktops(t *testing.T) {
 	for _, de := range []string{"xfce", "kde", "i3", "mate"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: de},
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("desktop %q should be valid: %v", de, err)
 		}
 	}
 }
 
-func TestValidateDesktopIncompatibleCombo(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageIncompatibleCombo(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "el", Desktop: "kde"},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for el + kde (incompatible)")
 	}
@@ -250,39 +250,39 @@ func TestValidateDesktopIncompatibleCombo(t *testing.T) {
 	}
 }
 
-func TestValidateDesktopELValidCombos(t *testing.T) {
+func TestValidateImageELValidCombos(t *testing.T) {
 	for _, de := range []string{"i3", "mate", "xfce"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "el", Desktop: de},
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("el + %q should be valid: %v", de, err)
 		}
 	}
 }
 
-func TestValidateDesktopRemovedDesktops(t *testing.T) {
+func TestValidateImageRemovedDesktops(t *testing.T) {
 	for _, de := range []string{"openbox", "icewm"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: de},
 		}
-		if err := ValidateDesktop(cfg); err == nil {
+		if err := ValidateImage(cfg); err == nil {
 			t.Errorf("desktop %q should be rejected", de)
 		}
 	}
 }
 
-func TestValidateDesktopPostRunInvalidRunAs(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImagePostRunInvalidRunAs(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		PostRun: []PostRunScript{
 			{Name: "setup", Script: "echo hi", RunAs: "nobody"},
 		},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for invalid runas")
 	}
@@ -291,22 +291,22 @@ func TestValidateDesktopPostRunInvalidRunAs(t *testing.T) {
 	}
 }
 
-func TestValidateDesktopPostRunValidRunAs(t *testing.T) {
+func TestValidateImagePostRunValidRunAs(t *testing.T) {
 	// Default user is "desktopus" when no user is set
 	for _, runas := range []string{"", "root", "desktopus"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 			PostRun: []PostRunScript{
 				{Name: "setup", Script: "echo hi", RunAs: runas},
 			},
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("runas %q should be valid: %v", runas, err)
 		}
 	}
 	// Custom user: runas must match the configured user
-	cfg := &DesktopConfig{
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		User: "carlos",
@@ -314,14 +314,14 @@ func TestValidateDesktopPostRunValidRunAs(t *testing.T) {
 			{Name: "setup", Script: "echo hi", RunAs: "carlos"},
 		},
 	}
-	if err := ValidateDesktop(cfg); err != nil {
+	if err := ValidateImage(cfg); err != nil {
 		t.Errorf("runas 'carlos' should be valid for user 'carlos': %v", err)
 	}
 }
 
-func TestValidateDesktopMultipleErrors(t *testing.T) {
-	cfg := &DesktopConfig{} // missing everything
-	err := ValidateDesktop(cfg)
+func TestValidateImageMultipleErrors(t *testing.T) {
+	cfg := &ImageConfig{} // missing everything
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Fatal("expected errors")
 	}
@@ -331,40 +331,40 @@ func TestValidateDesktopMultipleErrors(t *testing.T) {
 	}
 }
 
-func TestValidateDesktopModuleMissingName(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageModuleMissingName(t *testing.T) {
+	cfg := &ImageConfig{
 		Name:    "test",
 		Base:    BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		Modules: []ModuleRef{{Name: ""}},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for module without name")
 	}
 }
 
-func TestValidateDesktopFilesMissingPath(t *testing.T) {
-	cfg := &DesktopConfig{
+func TestValidateImageFilesMissingPath(t *testing.T) {
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		Files: []FileSpec{{Content: "hello"}},
 	}
-	err := ValidateDesktop(cfg)
+	err := ValidateImage(cfg)
 	if err == nil {
 		t.Error("expected error for file without path")
 	}
 }
 
-// --- FindDesktopConfig ---
+// --- FindImageConfig ---
 
-func TestFindDesktopConfigFromDir(t *testing.T) {
+func TestFindImageConfigFromDir(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "desktopus.yaml")
 	if err := os.WriteFile(configFile, []byte("name: test"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := FindDesktopConfig(dir)
+	got, err := FindImageConfig(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -373,14 +373,14 @@ func TestFindDesktopConfigFromDir(t *testing.T) {
 	}
 }
 
-func TestFindDesktopConfigFromFile(t *testing.T) {
+func TestFindImageConfigFromFile(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "custom.yaml")
 	if err := os.WriteFile(configFile, []byte("name: test"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := FindDesktopConfig(configFile)
+	got, err := FindImageConfig(configFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -389,25 +389,25 @@ func TestFindDesktopConfigFromFile(t *testing.T) {
 	}
 }
 
-func TestFindDesktopConfigMissing(t *testing.T) {
+func TestFindImageConfigMissing(t *testing.T) {
 	dir := t.TempDir()
 
-	_, err := FindDesktopConfig(dir)
+	_, err := FindImageConfig(dir)
 	if err == nil {
 		t.Error("expected error when no desktopus.yaml in directory")
 	}
 }
 
-func TestFindDesktopConfigBadPath(t *testing.T) {
-	_, err := FindDesktopConfig("/nonexistent/path")
+func TestFindImageConfigBadPath(t *testing.T) {
+	_, err := FindImageConfig("/nonexistent/path")
 	if err == nil {
 		t.Error("expected error for nonexistent path")
 	}
 }
 
-// --- LoadDesktop ---
+// --- LoadImage ---
 
-func TestLoadDesktop(t *testing.T) {
+func TestLoadImage(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "desktopus.yaml")
 
@@ -421,18 +421,12 @@ modules:
   - name: vscode
     vars:
       theme: dark
-runtime:
-  shm_size: 2g
-  ports:
-    - "3000:3000"
-  env:
-    TZ: UTC
 `
 	if err := os.WriteFile(configFile, []byte(yaml), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	cfg, err := LoadDesktop(configFile)
+	cfg, err := LoadImage(configFile)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -446,28 +440,22 @@ runtime:
 	if len(cfg.Modules) != 2 {
 		t.Errorf("expected 2 modules, got %d", len(cfg.Modules))
 	}
-	if cfg.Runtime.ShmSize != "2g" {
-		t.Errorf("expected shm_size 2g, got %q", cfg.Runtime.ShmSize)
-	}
-	if cfg.Runtime.Env["TZ"] != "UTC" {
-		t.Errorf("expected TZ=UTC, got %q", cfg.Runtime.Env["TZ"])
-	}
 }
 
-func TestLoadDesktopInvalidYAML(t *testing.T) {
+func TestLoadImageInvalidYAML(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "desktopus.yaml")
 	if err := os.WriteFile(configFile, []byte("{{invalid"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	_, err := LoadDesktop(configFile)
+	_, err := LoadImage(configFile)
 	if err == nil {
 		t.Error("expected error for invalid YAML")
 	}
 }
 
-func TestLoadDesktopValidationFails(t *testing.T) {
+func TestLoadImageValidationFails(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, "desktopus.yaml")
 
@@ -481,9 +469,89 @@ base:
 		t.Fatal(err)
 	}
 
-	_, err := LoadDesktop(configFile)
+	_, err := LoadImage(configFile)
 	if err == nil {
 		t.Error("expected validation error")
+	}
+}
+
+// --- LoadRuntime ---
+
+func TestLoadRuntimeMissingFile(t *testing.T) {
+	cfg, err := LoadRuntime("/nonexistent/desktopus.runtime.yaml")
+	if err != nil {
+		t.Fatalf("expected no error for missing runtime file, got: %v", err)
+	}
+	if cfg == nil {
+		t.Fatal("expected non-nil zero-value RuntimeConfig")
+	}
+}
+
+func TestLoadRuntime(t *testing.T) {
+	dir := t.TempDir()
+	runtimeFile := filepath.Join(dir, "desktopus.runtime.yaml")
+
+	content := `
+shm_size: 2g
+ports:
+  - "3000:3000"
+env:
+  TZ: UTC
+`
+	if err := os.WriteFile(runtimeFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadRuntime(runtimeFile)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.ShmSize != "2g" {
+		t.Errorf("expected shm_size 2g, got %q", cfg.ShmSize)
+	}
+	if cfg.Env["TZ"] != "UTC" {
+		t.Errorf("expected TZ=UTC, got %q", cfg.Env["TZ"])
+	}
+}
+
+func TestLoadRuntimeInvalidYAML(t *testing.T) {
+	dir := t.TempDir()
+	runtimeFile := filepath.Join(dir, "desktopus.runtime.yaml")
+	if err := os.WriteFile(runtimeFile, []byte("{{invalid"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadRuntime(runtimeFile)
+	if err == nil {
+		t.Error("expected error for invalid YAML")
+	}
+}
+
+// --- FindRuntimeConfig ---
+
+func TestFindRuntimeConfig(t *testing.T) {
+	got := FindRuntimeConfig("/some/dir/desktopus.yaml")
+	want := "/some/dir/desktopus.runtime.yaml"
+	if got != want {
+		t.Errorf("FindRuntimeConfig() = %q, want %q", got, want)
+	}
+}
+
+// --- ValidateRuntime ---
+
+func TestValidateRuntimeValidRestart(t *testing.T) {
+	for _, r := range []string{"", "no", "always", "unless-stopped", "on-failure"} {
+		cfg := &RuntimeConfig{Restart: r}
+		if err := ValidateRuntime(cfg); err != nil {
+			t.Errorf("restart %q should be valid: %v", r, err)
+		}
+	}
+}
+
+func TestValidateRuntimeInvalidRestart(t *testing.T) {
+	cfg := &RuntimeConfig{Restart: "sometimes"}
+	if err := ValidateRuntime(cfg); err == nil {
+		t.Error("expected error for invalid restart policy")
 	}
 }
 
@@ -541,20 +609,20 @@ server:
 
 // --- Custom user validation ---
 
-func TestValidateDesktopCustomUser(t *testing.T) {
+func TestValidateImageCustomUser(t *testing.T) {
 	for _, user := range []string{"carlos", "my_user", "x"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 			User: user,
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("user %q should be valid: %v", user, err)
 		}
 	}
 }
 
-func TestValidateDesktopInvalidUser(t *testing.T) {
+func TestValidateImageInvalidUser(t *testing.T) {
 	tests := []struct {
 		user string
 		desc string
@@ -565,36 +633,36 @@ func TestValidateDesktopInvalidUser(t *testing.T) {
 		{strings.Repeat("a", 33), "exceeds 32 chars"},
 	}
 	for _, tt := range tests {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 			User: tt.user,
 		}
-		if err := ValidateDesktop(cfg); err == nil {
+		if err := ValidateImage(cfg); err == nil {
 			t.Errorf("user %q (%s) should be invalid", tt.user, tt.desc)
 		}
 	}
 }
 
-func TestValidateDesktopCustomHome(t *testing.T) {
+func TestValidateImageCustomHome(t *testing.T) {
 	// Valid absolute paths
 	for _, home := range []string{"/home/carlos", "/workspace", "/"} {
-		cfg := &DesktopConfig{
+		cfg := &ImageConfig{
 			Name: "test",
 			Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 			Home: home,
 		}
-		if err := ValidateDesktop(cfg); err != nil {
+		if err := ValidateImage(cfg); err != nil {
 			t.Errorf("home %q should be valid: %v", home, err)
 		}
 	}
 	// Invalid: relative path
-	cfg := &DesktopConfig{
+	cfg := &ImageConfig{
 		Name: "test",
 		Base: BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		Home: "home/carlos",
 	}
-	if err := ValidateDesktop(cfg); err == nil {
+	if err := ValidateImage(cfg); err == nil {
 		t.Error("relative home path should be invalid")
 	}
 }
@@ -614,7 +682,7 @@ func TestEffectiveUserHome(t *testing.T) {
 		{"carlos", "/workspace", "carlos", "/workspace"},
 	}
 	for _, tt := range tests {
-		cfg := &DesktopConfig{User: tt.user, Home: tt.home}
+		cfg := &ImageConfig{User: tt.user, Home: tt.home}
 		if got := cfg.EffectiveUser(); got != tt.wantUser {
 			t.Errorf("user=%q home=%q: EffectiveUser()=%q, want %q", tt.user, tt.home, got, tt.wantUser)
 		}

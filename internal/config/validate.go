@@ -45,8 +45,8 @@ func sliceContains(slice []string, val string) bool {
 	return false
 }
 
-// ValidateDesktop checks a DesktopConfig for errors
-func ValidateDesktop(cfg *DesktopConfig) error {
+// ValidateImage checks an ImageConfig for errors
+func ValidateImage(cfg *ImageConfig) error {
 	var errs []string
 
 	if cfg.Name == "" {
@@ -114,5 +114,16 @@ func ValidateDesktop(cfg *DesktopConfig) error {
 		return fmt.Errorf("config validation failed:\n  - %s", strings.Join(errs, "\n  - "))
 	}
 
+	return nil
+}
+
+var validRestartPolicies = []string{"no", "always", "unless-stopped", "on-failure"}
+
+// ValidateRuntime checks a RuntimeConfig for errors
+func ValidateRuntime(cfg *RuntimeConfig) error {
+	if cfg.Restart != "" && !sliceContains(validRestartPolicies, cfg.Restart) {
+		return fmt.Errorf("config validation failed:\n  - restart %q is not valid (valid: %s)",
+			cfg.Restart, strings.Join(validRestartPolicies, ", "))
+	}
 	return nil
 }

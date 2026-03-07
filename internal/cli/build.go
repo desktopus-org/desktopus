@@ -32,12 +32,12 @@ var buildCmd = &cobra.Command{
 		}
 
 		// Find and load config
-		configPath, err := config.FindDesktopConfig(path)
+		configPath, err := config.FindImageConfig(path)
 		if err != nil {
 			return err
 		}
 
-		cfg, err := config.LoadDesktop(configPath)
+		cfg, err := config.LoadImage(configPath)
 		if err != nil {
 			return err
 		}

@@ -43,7 +43,7 @@ func NewPipeline(docker *client.Client, registry *module.Registry) *Pipeline {
 }
 
 // Build builds a Docker image from a desktop config
-func (p *Pipeline) Build(ctx context.Context, cfg *config.DesktopConfig, configDir string, opts Options, output io.Writer) error {
+func (p *Pipeline) Build(ctx context.Context, cfg *config.ImageConfig, configDir string, opts Options, output io.Writer) error {
 	// 1. Resolve all modules
 	modules, varsOverrides, err := p.resolveModules(cfg, configDir)
 	if err != nil {
@@ -133,7 +133,7 @@ func (p *Pipeline) Build(ctx context.Context, cfg *config.DesktopConfig, configD
 	return streamBuildOutput(resp.Body, output)
 }
 
-func (p *Pipeline) resolveModules(cfg *config.DesktopConfig, configDir string) ([]*module.Module, []map[string]interface{}, error) {
+func (p *Pipeline) resolveModules(cfg *config.ImageConfig, configDir string) ([]*module.Module, []map[string]interface{}, error) {
 	modules := make([]*module.Module, 0, len(cfg.Modules))
 	varsOverrides := make([]map[string]interface{}, 0, len(cfg.Modules))
 
@@ -197,7 +197,7 @@ func (p *Pipeline) addModuleFiles(bctx *BuildContext, modules []*module.Module) 
 	return nil
 }
 
-func addPostRunScripts(bctx *BuildContext, cfg *config.DesktopConfig) error {
+func addPostRunScripts(bctx *BuildContext, cfg *config.ImageConfig) error {
 	for i, pr := range cfg.PostRun {
 		runas := pr.RunAs
 		if runas == "" {
@@ -219,7 +219,7 @@ func addPostRunScripts(bctx *BuildContext, cfg *config.DesktopConfig) error {
 	return nil
 }
 
-func addRuntimeFiles(bctx *BuildContext, cfg *config.DesktopConfig) error {
+func addRuntimeFiles(bctx *BuildContext, cfg *config.ImageConfig) error {
 	if len(cfg.Files) == 0 {
 		return nil
 	}

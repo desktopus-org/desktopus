@@ -52,7 +52,7 @@ func TestBuildModule(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					imageTag := fmt.Sprintf("desktopus/test-%s-%s-%s:integration", mod.Name, os, desktop)
 
-					cfg := &config.DesktopConfig{
+					cfg := &config.ImageConfig{
 						Name: fmt.Sprintf("test-%s-%s-%s", mod.Name, os, desktop),
 						Base: config.BaseSpec{OS: os, Desktop: desktop},
 						Modules: []config.ModuleRef{

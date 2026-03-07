@@ -151,7 +151,7 @@ func TestGenerateDockerfile(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name:        "test-desktop",
 		Description: "A test desktop",
 		Base:        config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
@@ -203,7 +203,7 @@ func TestGenerateDockerfileFedora(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "fedora-desktop",
 		Base: config.BaseSpec{OS: "fedora", Desktop: "xfce"},
 	}
@@ -239,7 +239,7 @@ func TestGenerateDockerfileArch(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "arch-desktop",
 		Base: config.BaseSpec{OS: "arch", Desktop: "i3"},
 	}
@@ -272,7 +272,7 @@ func TestGenerateDockerfileAlpine(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "alpine-desktop",
 		Base: config.BaseSpec{OS: "alpine", Desktop: "xfce"},
 	}
@@ -305,7 +305,7 @@ func TestGenerateDockerfileEL(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "el-desktop",
 		Base: config.BaseSpec{OS: "el", Desktop: "xfce"},
 	}
@@ -335,7 +335,7 @@ func TestGenerateDockerfileWithPostRun(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		PostRun: []config.PostRunScript{
@@ -360,7 +360,7 @@ func TestGenerateDockerfileWithVerbosity(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 	}
@@ -382,7 +382,7 @@ func TestGenerateDockerfileDeduplicatesPackages(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 	}
@@ -541,7 +541,7 @@ func TestGeneratePlaybookOSFallback(t *testing.T) {
 
 func TestAddPostRunScripts(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		PostRun: []config.PostRunScript{
 			{Name: "setup-git", RunAs: "abc", Script: "git config --global user.name test"},
 			{Name: "root-setup", RunAs: "root", Script: "apt-get update"},
@@ -598,7 +598,7 @@ func TestAddPostRunScripts(t *testing.T) {
 
 func TestAddPostRunScriptsDefaultRunAs(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		PostRun: []config.PostRunScript{
 			{Name: "test", Script: "echo hi"}, // no RunAs specified
 		},
@@ -633,7 +633,7 @@ func TestAddPostRunScriptsDefaultRunAs(t *testing.T) {
 
 func TestAddRuntimeFiles(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Files: []config.FileSpec{
 			{Path: "/config/.bashrc", Content: "export PS1='\\u@\\h'", Mode: "0644"},
 			{Path: "/config/.vimrc", Content: "set number"},
@@ -686,7 +686,7 @@ func TestAddRuntimeFiles(t *testing.T) {
 
 func TestAddRuntimeFilesEmpty(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{} // no files
+	cfg := &config.ImageConfig{} // no files
 
 	if err := addRuntimeFiles(bctx, cfg); err != nil {
 		t.Fatalf("addRuntimeFiles: %v", err)
@@ -843,7 +843,7 @@ func TestGenerateDockerfileDefaultUser(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		// User omitted → creates "desktopus" with home "/home/desktopus"
@@ -876,7 +876,7 @@ func TestGenerateDockerfileAbcUser(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		User: "abc",
@@ -909,7 +909,7 @@ func TestGenerateDockerfileCustomUser(t *testing.T) {
 		t.Fatalf("parse template: %v", err)
 	}
 
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		Name: "test",
 		Base: config.BaseSpec{OS: "ubuntu", Desktop: "xfce"},
 		User: "carlos",
@@ -978,7 +978,7 @@ func TestGeneratePlaybookCustomUser(t *testing.T) {
 
 func TestAddPostRunScriptsDefaultUser(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		// User omitted → effective user is "desktopus"
 		PostRun: []config.PostRunScript{
 			{Name: "test", Script: "echo hi"},
@@ -1010,7 +1010,7 @@ func TestAddPostRunScriptsDefaultUser(t *testing.T) {
 
 func TestAddRuntimeFilesDefaultUser(t *testing.T) {
 	bctx := NewBuildContext()
-	cfg := &config.DesktopConfig{
+	cfg := &config.ImageConfig{
 		// User omitted → effective user is "desktopus"
 		Files: []config.FileSpec{
 			{Path: "/home/desktopus/.bashrc", Content: "# bashrc"},

@@ -23,13 +23,13 @@ var stopCmd = &cobra.Command{
 			return fmt.Errorf("specify container name(s) or use --all")
 		}
 
-		dockerClient, err := newDockerClient()
+		provider, err := runtime.NewProvider("")
 		if err != nil {
 			return err
 		}
-		defer func() { _ = dockerClient.Close() }()
+		defer func() { _ = provider.Close() }()
 
-		mgr := runtime.NewManager(dockerClient)
+		mgr := runtime.NewManager(provider)
 		ctx := context.Background()
 
 		if stopAll {

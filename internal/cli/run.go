@@ -51,14 +51,13 @@ var runCmd = &cobra.Command{
 			return err
 		}
 
-		// Create Docker client
-		dockerClient, err := newDockerClient()
+		provider, err := runtime.NewProvider(rt.Provider)
 		if err != nil {
 			return err
 		}
-		defer func() { _ = dockerClient.Close() }()
+		defer func() { _ = provider.Close() }()
 
-		mgr := runtime.NewManager(dockerClient)
+		mgr := runtime.NewManager(provider)
 
 		// Parse CLI env vars
 		envMap := make(map[string]string)

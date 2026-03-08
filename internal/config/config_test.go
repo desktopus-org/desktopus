@@ -577,6 +577,37 @@ func TestValidateRuntimeInvalidRestart(t *testing.T) {
 	}
 }
 
+func TestValidateRuntimeValidProvider(t *testing.T) {
+	for _, p := range []string{"", "docker"} {
+		cfg := &RuntimeConfig{Provider: p}
+		if err := ValidateRuntime(cfg); err != nil {
+			t.Errorf("provider %q should be valid: %v", p, err)
+		}
+	}
+}
+
+func TestValidateRuntimeInvalidProvider(t *testing.T) {
+	cfg := &RuntimeConfig{Provider: "podman"}
+	err := ValidateRuntime(cfg)
+	if err == nil {
+		t.Error("expected error for unsupported provider")
+	}
+	if !strings.Contains(err.Error(), "provider") {
+		t.Errorf("expected 'provider' in error, got: %v", err)
+	}
+}
+
+func TestValidateRuntimeMultipleErrors(t *testing.T) {
+	cfg := &RuntimeConfig{Restart: "bad", Provider: "podman"}
+	err := ValidateRuntime(cfg)
+	if err == nil {
+		t.Fatal("expected errors")
+	}
+	if strings.Count(err.Error(), "\n") < 1 {
+		t.Errorf("expected multiple errors, got: %v", err)
+	}
+}
+
 // --- LoadApp ---
 
 func TestLoadAppDefaults(t *testing.T) {

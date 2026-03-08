@@ -1,0 +1,12 @@
+name: basic-desktop
+image: basic-desktop:latest
+shm_size: 1g
+
+ports:
+  - "3000:3000"   # web UI (HTTP)
+  - "3001:3001"   # web UI (HTTPS)
+
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC

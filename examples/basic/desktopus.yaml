@@ -1,0 +1,10 @@
+name: basic-desktop
+description: "Minimal Ubuntu/XFCE desktop with no GPU passthrough"
+image: basic-desktop:latest
+
+base:
+  os: ubuntu
+  desktop: xfce
+
+modules:
+  - chrome

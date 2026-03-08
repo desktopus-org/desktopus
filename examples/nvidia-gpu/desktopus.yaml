@@ -1,0 +1,10 @@
+name: nvidia-desktop
+description: "Ubuntu/KDE desktop with Nvidia GPU passthrough"
+image: nvidia-desktop:latest
+
+base:
+  os: ubuntu
+  desktop: kde
+
+modules:
+  - chrome

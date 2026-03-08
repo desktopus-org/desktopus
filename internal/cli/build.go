@@ -42,6 +42,17 @@ var buildCmd = &cobra.Command{
 			return err
 		}
 
+		runtimePath := config.FindRuntimeConfig(configPath)
+		rt, err := config.LoadRuntime(runtimePath)
+		if err != nil {
+			return err
+		}
+
+		imageTag, err := config.ResolveImageTag(rt, buildTag)
+		if err != nil {
+			return err
+		}
+
 		configDir := filepath.Dir(configPath)
 
 		// Create Docker client
@@ -60,7 +71,7 @@ var buildCmd = &cobra.Command{
 		// Run build
 		pipeline := build.NewPipeline(dockerClient, registry)
 		opts := build.Options{
-			Tag:              buildTag,
+			Tag:              imageTag,
 			NoCache:          buildNoCache,
 			AnsibleVerbosity: appConfig.Build.AnsibleVerbosity,
 		}
@@ -81,17 +92,13 @@ var buildCmd = &cobra.Command{
 			return fmt.Errorf("build failed: %w", err)
 		}
 
-		tag := cfg.ImageTag()
-		if buildTag != "" {
-			tag = buildTag
-		}
-		fmt.Printf("\nBuild complete: %s\n", tag)
+		fmt.Printf("\nBuild complete: %s\n", imageTag)
 		return nil
 	},
 }
 
 func init() {
-	buildCmd.Flags().StringVar(&buildTag, "tag", "", "override image tag")
+	buildCmd.Flags().StringVarP(&buildTag, "tag", "t", "", "override image tag")
 	buildCmd.Flags().BoolVar(&buildNoCache, "no-cache", false, "build without Docker cache")
 }
 

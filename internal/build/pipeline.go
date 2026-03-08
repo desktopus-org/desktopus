@@ -113,13 +113,8 @@ func (p *Pipeline) Build(ctx context.Context, cfg *config.ImageConfig, configDir
 	}
 
 	// 8. Build image via Docker SDK
-	imageTag := cfg.ImageTag()
-	if opts.Tag != "" {
-		imageTag = opts.Tag
-	}
-
 	resp, err := p.docker.ImageBuild(ctx, reader, client.ImageBuildOptions{
-		Tags:       []string{imageTag},
+		Tags:       []string{opts.Tag},
 		Dockerfile: "Dockerfile",
 		Remove:     true,
 		NoCache:    opts.NoCache,

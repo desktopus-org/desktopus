@@ -47,6 +47,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(stopCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(volumeCmd)
 }
 
 // Execute runs the root command

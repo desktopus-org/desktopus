@@ -33,6 +33,14 @@ func (m *Manager) List(ctx context.Context, all bool) ([]ContainerInfo, error) {
 	return m.provider.List(ctx, all)
 }
 
+func (m *Manager) VolumeList(ctx context.Context) ([]VolumeInfo, error) {
+	return m.provider.VolumeList(ctx)
+}
+
+func (m *Manager) VolumeRemove(ctx context.Context, name string, force bool) error {
+	return m.provider.VolumeRemove(ctx, name, force)
+}
+
 // DesktopRunConfig is a flattened view of what the runtime needs to create a container.
 // This decouples the runtime package from the config package.
 type DesktopRunConfig struct {
@@ -50,4 +58,8 @@ type DesktopRunConfig struct {
 
 	// Env is the merged set of all env vars (defaults + runtime.env)
 	Env map[string]string
+
+	// PersistenceHome, when non-empty, is the name of a Docker volume to mount
+	// at the user's home directory (/config for abc, /home/<user> otherwise).
+	PersistenceHome string
 }

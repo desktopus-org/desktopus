@@ -10,18 +10,23 @@ import (
 var _ Provider = (*mockProvider)(nil)
 
 type mockProvider struct {
-	runCalled    bool
-	stopCalled   bool
-	removeCalled bool
-	listCalled   bool
-	closeCalled  bool
+	runCalled         bool
+	stopCalled        bool
+	removeCalled      bool
+	listCalled        bool
+	volumeListCalled  bool
+	volumeRemoveCalled bool
+	closeCalled       bool
 
-	runResult    string
-	runErr       error
-	stopErr      error
-	removeErr    error
-	listResult   []ContainerInfo
-	listErr      error
+	runResult         string
+	runErr            error
+	stopErr           error
+	removeErr         error
+	listResult        []ContainerInfo
+	listErr           error
+	volumeListResult  []VolumeInfo
+	volumeListErr     error
+	volumeRemoveErr   error
 }
 
 func (m *mockProvider) Run(_ context.Context, _ *DesktopRunConfig, _ RunOptions, _ io.Writer) (string, error) {
@@ -42,6 +47,16 @@ func (m *mockProvider) Remove(_ context.Context, _ string, _ bool) error {
 func (m *mockProvider) List(_ context.Context, _ bool) ([]ContainerInfo, error) {
 	m.listCalled = true
 	return m.listResult, m.listErr
+}
+
+func (m *mockProvider) VolumeList(_ context.Context) ([]VolumeInfo, error) {
+	m.volumeListCalled = true
+	return m.volumeListResult, m.volumeListErr
+}
+
+func (m *mockProvider) VolumeRemove(_ context.Context, _ string, _ bool) error {
+	m.volumeRemoveCalled = true
+	return m.volumeRemoveErr
 }
 
 func (m *mockProvider) Close() error {

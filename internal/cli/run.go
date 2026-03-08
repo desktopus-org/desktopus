@@ -210,7 +210,7 @@ func waitForWeb(url string) {
 	for time.Now().Before(deadline) {
 		resp, err := client.Get(url)
 		if err == nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return
 		}
 		if first {

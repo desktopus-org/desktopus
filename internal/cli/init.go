@@ -68,6 +68,7 @@ func init() {
 func generateImageYAML(name, osName, desktop string) string {
 	return fmt.Sprintf(`name: %s
 description: "My desktop environment"
+image: %s:latest
 
 base:
   os: %s
@@ -86,12 +87,11 @@ modules:
 #     runas: abc
 #     script: |
 #       echo "Hello from post-run script"
-`, name, osName, desktop)
+`, name, name, osName, desktop)
 }
 
 func generateRuntimeYAML(name string) string {
 	return fmt.Sprintf(`name: %s
-default_image: desktopus/%s:latest
 shm_size: 2g
 ports:
   - "3000:3000"
@@ -103,5 +103,5 @@ env:
   PUID: "1000"
   PGID: "1000"
   TZ: UTC
-`, name, name)
+`, name)
 }

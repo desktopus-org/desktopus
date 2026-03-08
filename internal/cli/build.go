@@ -42,13 +42,7 @@ var buildCmd = &cobra.Command{
 			return err
 		}
 
-		runtimePath := config.FindRuntimeConfig(configPath)
-		rt, err := config.LoadRuntime(runtimePath)
-		if err != nil {
-			return err
-		}
-
-		imageTag, err := config.ResolveImageTag(rt, buildTag)
+		imageTag, err := config.ResolveImageTag(cfg.Image, buildTag)
 		if err != nil {
 			return err
 		}

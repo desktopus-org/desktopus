@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, session } = require('electron');
 const path = require('path');
 
 // In dev mode (`electron . <url>`), Electron inserts the app path at argv[1],
@@ -29,31 +29,10 @@ const SUPPRESSED = [
 // reach the host desktop.
 //
 // IMPORTANT: keyboard.lock() requires document.fullscreenElement to be non-null
-// (renderer-side fullscreen). Electron kiosk mode only sets OS-level fullscreen,
-// so we must call document.requestFullscreen() first, simulating a user gesture
-// via executeJavaScript(code, true) to bypass the gesture requirement.
-//
-// keyboard.lock() itself is called from the enter-html-full-screen event handler,
-// which fires after the OS has fully committed fullscreen and focus has settled —
-// avoiding the timing race that occurs when calling lock() immediately after
-// requestFullscreen() resolves.
-const LOCK_JS = `
-  (async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-      }
-    } catch (_) {}
-  })();
-`;
-const UNLOCK_JS = `
-  if (navigator.keyboard && navigator.keyboard.unlock) {
-    navigator.keyboard.unlock();
-  }
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {});
-  }
-`;
+// (renderer-side fullscreen). It is called from the enter-html-full-screen event
+// handler, which fires after the OS has fully committed fullscreen and focus has
+// settled — avoiding the timing race that occurs when calling lock() immediately
+// after requestFullscreen() resolves.
 const KEYBOARD_LOCK_JS = `
   if (navigator.keyboard && navigator.keyboard.lock) {
     navigator.keyboard.lock().catch(() => {});
@@ -74,8 +53,6 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      // Disable web security only for localhost targets — Selkies needs it.
-      webSecurity: !url.startsWith('http://localhost'),
     },
   });
 
@@ -112,7 +89,31 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+// Restrict all HTTP/WebSocket requests to the target host:port only.
+// webRequest.onBeforeRequest has no default handler — this is additive.
+// WebRTC peer connections are not HTTP requests and are unaffected.
+const targetHost = new URL(url).host;
+app.whenReady().then(() => {
+  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    const { url: reqUrl } = details;
+    if (
+      reqUrl.startsWith('devtools://') ||
+      reqUrl.startsWith('chrome-extension://') ||
+      reqUrl.startsWith('data:') ||
+      reqUrl.startsWith('blob:')
+    ) {
+      callback({ cancel: false });
+      return;
+    }
+    try {
+      callback({ cancel: new URL(reqUrl).host !== targetHost });
+    } catch {
+      callback({ cancel: true });
+    }
+  });
+
+  createWindow();
+});
 
 // Prevent navigation away from the target — the viewer is single-purpose.
 app.on('web-contents-created', (_event, contents) => {

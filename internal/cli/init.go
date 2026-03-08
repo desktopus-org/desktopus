@@ -91,7 +91,7 @@ modules:
 
 func generateRuntimeYAML(name string) string {
 	return fmt.Sprintf(`name: %s
-default_image: desktopus/%s:latest
+# default_image: myregistry/my-image:latest
 shm_size: 2g
 ports:
   - "3000:3000"
@@ -103,5 +103,5 @@ env:
   PUID: "1000"
   PGID: "1000"
   TZ: UTC
-`, name, name)
+`, name)
 }

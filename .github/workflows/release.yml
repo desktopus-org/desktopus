@@ -67,7 +67,7 @@ jobs:
           cache: true
 
       - name: Download viewer artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: viewer-${{ matrix.goarch }}
           path: internal/viewer/assets/
@@ -121,7 +121,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download all release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: release-*
           merge-multiple: true

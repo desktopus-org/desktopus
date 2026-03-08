@@ -11,7 +11,7 @@ import (
 func NewProvider(name string) (Provider, error) {
 	switch name {
 	case "", "docker":
-		cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+		cli, err := client.New(client.FromEnv)
 		if err != nil {
 			return nil, fmt.Errorf("connecting to Docker: %w", err)
 		}

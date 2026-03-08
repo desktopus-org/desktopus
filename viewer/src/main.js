@@ -32,14 +32,16 @@ const SUPPRESSED = [
 // (renderer-side fullscreen). Electron kiosk mode only sets OS-level fullscreen,
 // so we must call document.requestFullscreen() first, simulating a user gesture
 // via executeJavaScript(code, true) to bypass the gesture requirement.
+//
+// keyboard.lock() itself is called from the enter-html-full-screen event handler,
+// which fires after the OS has fully committed fullscreen and focus has settled —
+// avoiding the timing race that occurs when calling lock() immediately after
+// requestFullscreen() resolves.
 const LOCK_JS = `
   (async () => {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
-      }
-      if (navigator.keyboard && navigator.keyboard.lock) {
-        await navigator.keyboard.lock();
       }
     } catch (_) {}
   })();
@@ -52,17 +54,16 @@ const UNLOCK_JS = `
     document.exitFullscreen().catch(() => {});
   }
 `;
-
-function lockKeyboard(win) {
-  // userGesture=true is required so requestFullscreen() doesn't throw.
-  win.webContents.executeJavaScript(LOCK_JS, true).catch(() => {});
-}
-
-function unlockKeyboard(win) {
-  win.webContents.executeJavaScript(UNLOCK_JS, true).catch(() => {});
-}
+const KEYBOARD_LOCK_JS = `
+  if (navigator.keyboard && navigator.keyboard.lock) {
+    navigator.keyboard.lock().catch(() => {});
+  }
+`;
 
 function createWindow() {
+  // Tracks whether renderer-side fullscreen+keyboard-lock is active.
+  let captureActive = false;
+
   const win = new BrowserWindow({
     width: 1920,
     height: 1080,
@@ -80,10 +81,27 @@ function createWindow() {
 
   win.loadURL(url);
 
+  // Called after the OS has fully committed fullscreen and focus has settled.
+  // This is the reliable moment to apply keyboard.lock().
+  win.webContents.on('enter-html-full-screen', () => {
+    captureActive = true;
+    win.webContents.executeJavaScript(KEYBOARD_LOCK_JS, true).catch(() => {});
+  });
+
+  win.webContents.on('leave-html-full-screen', () => {
+    captureActive = false;
+    win.webContents.executeJavaScript(
+      'if (navigator.keyboard && navigator.keyboard.unlock) { navigator.keyboard.unlock(); }',
+      true
+    ).catch(() => {});
+  });
+
   // Re-lock on focus in case the OS released the grab (e.g. after a VT switch),
   // but only if the user has already entered capture mode.
   win.on('focus', () => {
-    if (win.isKiosk()) lockKeyboard(win);
+    if (captureActive) {
+      win.webContents.executeJavaScript(KEYBOARD_LOCK_JS, true).catch(() => {});
+    }
   });
 
   win.webContents.on('before-input-event', (event, input) => {

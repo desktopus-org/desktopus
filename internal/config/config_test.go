@@ -499,6 +499,83 @@ base:
 
 // --- LoadRuntime ---
 
+// --- WebConfig / web: block parsing ---
+
+func TestLoadRuntimeWebAbsent(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "desktopus.runtime.yaml")
+	if err := os.WriteFile(f, []byte("image: mydesk:latest\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadRuntime(f)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Web != nil {
+		t.Errorf("expected Web to be nil when web: block is absent, got %+v", cfg.Web)
+	}
+}
+
+func TestLoadRuntimeWebFixed(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "desktopus.runtime.yaml")
+	content := "image: mydesk:latest\nweb:\n  http_port: 3000\n"
+	if err := os.WriteFile(f, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadRuntime(f)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Web == nil {
+		t.Fatal("expected Web to be non-nil when web: block is present")
+	}
+	if cfg.Web.HTTPPort != 3000 {
+		t.Errorf("expected HTTPPort 3000, got %d", cfg.Web.HTTPPort)
+	}
+	if cfg.Web.HTTPSPort != 0 {
+		t.Errorf("expected HTTPSPort 0 (absent), got %d", cfg.Web.HTTPSPort)
+	}
+}
+
+func TestLoadRuntimeWebRandom(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "desktopus.runtime.yaml")
+	content := "image: mydesk:latest\nweb:\n  http_port: 0\n"
+	if err := os.WriteFile(f, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadRuntime(f)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Web == nil {
+		t.Fatal("expected Web to be non-nil when web: block is present")
+	}
+	if cfg.Web.HTTPPort != 0 {
+		t.Errorf("expected HTTPPort 0 (random), got %d", cfg.Web.HTTPPort)
+	}
+}
+
+func TestLoadRuntimeWebHTTPS(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "desktopus.runtime.yaml")
+	content := "image: mydesk:latest\nweb:\n  http_port: 3000\n  https_port: 3001\n"
+	if err := os.WriteFile(f, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadRuntime(f)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Web == nil {
+		t.Fatal("expected Web non-nil")
+	}
+	if cfg.Web.HTTPPort != 3000 || cfg.Web.HTTPSPort != 3001 {
+		t.Errorf("expected http=3000 https=3001, got http=%d https=%d", cfg.Web.HTTPPort, cfg.Web.HTTPSPort)
+	}
+}
+
 func TestLoadRuntimeMissingFile(t *testing.T) {
 	cfg, err := LoadRuntime("/nonexistent/desktopus.runtime.yaml")
 	if err != nil {

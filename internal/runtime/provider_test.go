@@ -59,6 +59,10 @@ func (m *mockProvider) VolumeRemove(_ context.Context, _ string, _ bool) error {
 	return m.volumeRemoveErr
 }
 
+func (m *mockProvider) WebPort(_ context.Context, _ string) (int, error) {
+	return 0, nil
+}
+
 func (m *mockProvider) Close() error {
 	m.closeCalled = true
 	return nil

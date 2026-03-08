@@ -181,6 +181,13 @@ func (d *DockerProvider) List(ctx context.Context, all bool) ([]ContainerInfo, e
 		}
 
 		ports := formatPorts(c.Ports)
+		webPort := 0
+		for _, p := range c.Ports {
+			if p.PrivatePort == 3000 && p.Type == "tcp" {
+				webPort = int(p.PublicPort)
+				break
+			}
+		}
 
 		infos[i] = ContainerInfo{
 			ID:      c.ID[:12],
@@ -190,6 +197,7 @@ func (d *DockerProvider) List(ctx context.Context, all bool) ([]ContainerInfo, e
 			Status:  string(c.State),
 			State:   c.Status,
 			Ports:   ports,
+			WebPort: webPort,
 			Created: time.Unix(c.Created, 0),
 		}
 	}
@@ -307,6 +315,27 @@ func buildPortBindings(cfg *DesktopRunConfig, opts RunOptions) (network.PortMap,
 		}
 	}
 
+	// Container port 3000 (HTTP web interface) is always published.
+	// An empty host port string tells Docker to pick a random ephemeral port.
+	webHTTP, _ := network.ParsePort("3000/tcp")
+	portSet[webHTTP] = struct{}{}
+	httpHostPort := ""
+	if cfg.WebHTTPPort > 0 {
+		httpHostPort = strconv.Itoa(cfg.WebHTTPPort)
+	}
+	portMap[webHTTP] = []network.PortBinding{
+		{HostIP: netip.MustParseAddr("0.0.0.0"), HostPort: httpHostPort},
+	}
+
+	// Container port 3001 (HTTPS) is only published when explicitly configured.
+	if cfg.WebHTTPSPort > 0 {
+		webHTTPS, _ := network.ParsePort("3001/tcp")
+		portSet[webHTTPS] = struct{}{}
+		portMap[webHTTPS] = []network.PortBinding{
+			{HostIP: netip.MustParseAddr("0.0.0.0"), HostPort: strconv.Itoa(cfg.WebHTTPSPort)},
+		}
+	}
+
 	return portMap, portSet, nil
 }
 
@@ -394,6 +423,28 @@ func (d *DockerProvider) ensureNamedVolumes(ctx context.Context, binds []string,
 			Labels: labels,
 		})
 	}
+}
+
+// WebPort returns the host port bound to container port 3000/tcp for the given
+// container. Returns 0 if the port is not mapped.
+func (d *DockerProvider) WebPort(ctx context.Context, nameOrID string) (int, error) {
+	info, err := d.docker.ContainerInspect(ctx, nameOrID, client.ContainerInspectOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("inspecting container %q: %w", nameOrID, err)
+	}
+	ns := info.Container.NetworkSettings
+	if ns == nil {
+		return 0, nil
+	}
+	bindings := ns.Ports[network.MustParsePort("3000/tcp")]
+	if len(bindings) == 0 {
+		return 0, nil
+	}
+	port, err := strconv.Atoi(bindings[0].HostPort)
+	if err != nil {
+		return 0, nil
+	}
+	return port, nil
 }
 
 // VolumeList returns all desktopus-managed Docker volumes.

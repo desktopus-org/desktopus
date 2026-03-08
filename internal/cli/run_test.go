@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/desktopus-org/desktopus/internal/config"
@@ -161,6 +162,76 @@ func TestToDesktopRunConfigPersistenceHome(t *testing.T) {
 	cfg2 := toDesktopRunConfig(rt2, "mydesk:latest")
 	if cfg2.PersistenceHome != "" {
 		t.Errorf("expected PersistenceHome empty, got %q", cfg2.PersistenceHome)
+	}
+}
+
+// --- toDesktopRunConfig web port mapping ---
+
+func TestToDesktopRunConfigWebAbsent(t *testing.T) {
+	rt := &config.RuntimeConfig{} // no Web field — defaults to random HTTP, no HTTPS
+	cfg := toDesktopRunConfig(rt, "mydesk:latest")
+	if cfg.WebHTTPPort != 0 {
+		t.Errorf("expected WebHTTPPort 0 (random) when web block is absent, got %d", cfg.WebHTTPPort)
+	}
+	if cfg.WebHTTPSPort != 0 {
+		t.Errorf("expected WebHTTPSPort 0 when web block is absent, got %d", cfg.WebHTTPSPort)
+	}
+}
+
+func TestToDesktopRunConfigWebFixed(t *testing.T) {
+	rt := &config.RuntimeConfig{Web: &config.WebConfig{HTTPPort: 3000}}
+	cfg := toDesktopRunConfig(rt, "mydesk:latest")
+	if cfg.WebHTTPPort != 3000 {
+		t.Errorf("expected WebHTTPPort 3000, got %d", cfg.WebHTTPPort)
+	}
+	if cfg.WebHTTPSPort != 0 {
+		t.Errorf("expected WebHTTPSPort 0, got %d", cfg.WebHTTPSPort)
+	}
+}
+
+func TestToDesktopRunConfigWebRandom(t *testing.T) {
+	rt := &config.RuntimeConfig{Web: &config.WebConfig{HTTPPort: 0}}
+	cfg := toDesktopRunConfig(rt, "mydesk:latest")
+	if cfg.WebHTTPPort != 0 {
+		t.Errorf("expected WebHTTPPort 0 (random), got %d", cfg.WebHTTPPort)
+	}
+}
+
+func TestToDesktopRunConfigWebHTTPS(t *testing.T) {
+	rt := &config.RuntimeConfig{Web: &config.WebConfig{HTTPPort: 3000, HTTPSPort: 3001}}
+	cfg := toDesktopRunConfig(rt, "mydesk:latest")
+	if cfg.WebHTTPPort != 3000 || cfg.WebHTTPSPort != 3001 {
+		t.Errorf("expected http=3000 https=3001, got http=%d https=%d", cfg.WebHTTPPort, cfg.WebHTTPSPort)
+	}
+}
+
+// --- init-generated runtime YAML ---
+
+func TestGenerateRuntimeYAMLHasWebBlock(t *testing.T) {
+	yaml := generateRuntimeYAML("mydesk")
+	if !strings.Contains(yaml, "web:") {
+		t.Error("expected generated runtime YAML to contain 'web:' block")
+	}
+	if strings.Contains(yaml, "ports:") {
+		t.Error("expected generated runtime YAML not to contain 'ports:' array")
+	}
+}
+
+func TestGenerateRuntimeYAMLParsesWebBlock(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "desktopus.runtime.yaml")
+	if err := os.WriteFile(f, []byte(generateRuntimeYAML("mydesk")), 0644); err != nil {
+		t.Fatal(err)
+	}
+	rt, err := config.LoadRuntime(f)
+	if err != nil {
+		t.Fatalf("generated YAML failed to parse: %v", err)
+	}
+	if rt.Web == nil {
+		t.Fatal("expected Web block to be non-nil in generated YAML")
+	}
+	if rt.Web.HTTPPort != 3000 {
+		t.Errorf("expected http_port 3000, got %d", rt.Web.HTTPPort)
 	}
 }
 

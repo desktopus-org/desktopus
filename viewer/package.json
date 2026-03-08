@@ -1,0 +1,35 @@
+{
+  "name": "desktopus-viewer",
+  "version": "1.0.0",
+  "description": "Desktop viewer for desktopus — full keyboard/mouse capture",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:amd64": "electron-builder --linux AppImage --x64 --publish=never",
+    "build:arm64": "electron-builder --linux AppImage --arm64 --publish=never"
+  },
+  "build": {
+    "appId": "org.desktopus.viewer",
+    "productName": "desktopus-viewer",
+    "artifactName": "desktopus-viewer",
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^40.0.0",
+    "electron-builder": "^26.0.0"
+  }
+}

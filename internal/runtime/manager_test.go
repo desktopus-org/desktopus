@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 )
 
 func TestParseSize(t *testing.T) {
@@ -92,8 +93,10 @@ func splitEnv(s string) [2]string {
 }
 
 func TestBuildPortBindings(t *testing.T) {
+	// 3000/tcp is always published (random host port since WebHTTPPort==0),
+	// plus 8080:80 and 9090:9090 from the generic lists.
 	cfg := &DesktopRunConfig{
-		Ports: []string{"3000:3000", "8080:80"},
+		Ports: []string{"8080:80"},
 	}
 	opts := RunOptions{
 		Ports: []string{"9090:9090"},
@@ -105,10 +108,80 @@ func TestBuildPortBindings(t *testing.T) {
 	}
 
 	if len(portMap) != 3 {
-		t.Errorf("expected 3 port mappings, got %d", len(portMap))
+		t.Errorf("expected 3 port mappings (80, 9090, 3000), got %d", len(portMap))
 	}
 	if len(portSet) != 3 {
 		t.Errorf("expected 3 exposed ports, got %d", len(portSet))
+	}
+}
+
+func TestBuildPortBindingsWebAlwaysPublished(t *testing.T) {
+	// Even with no ports configured, 3000/tcp is always bound.
+	cfg := &DesktopRunConfig{}
+	portMap, portSet, err := buildPortBindings(cfg, RunOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(portMap) != 1 || len(portSet) != 1 {
+		t.Errorf("expected 1 mapping (3000/tcp), got %d", len(portMap))
+	}
+	port3000, _ := network.ParsePort("3000/tcp")
+	if bindings := portMap[port3000]; len(bindings) == 0 || bindings[0].HostPort != "" {
+		t.Errorf("expected 3000/tcp with empty host port (random), got %v", bindings)
+	}
+}
+
+func TestBuildPortBindingsWebFixed(t *testing.T) {
+	cfg := &DesktopRunConfig{WebHTTPPort: 3000}
+	portMap, portSet, err := buildPortBindings(cfg, RunOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(portMap) != 1 || len(portSet) != 1 {
+		t.Fatalf("expected 1 mapping, got portMap=%d portSet=%d", len(portMap), len(portSet))
+	}
+	port3000, _ := network.ParsePort("3000/tcp")
+	bindings, ok := portMap[port3000]
+	if !ok {
+		t.Fatal("expected 3000/tcp in port map")
+	}
+	if bindings[0].HostPort != "3000" {
+		t.Errorf("expected host port '3000', got %q", bindings[0].HostPort)
+	}
+}
+
+func TestBuildPortBindingsWebRandom(t *testing.T) {
+	cfg := &DesktopRunConfig{WebHTTPPort: 0} // explicit random
+	portMap, _, err := buildPortBindings(cfg, RunOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(portMap) != 1 {
+		t.Fatalf("expected 1 mapping for random web port, got %d", len(portMap))
+	}
+	port3000, _ := network.ParsePort("3000/tcp")
+	bindings := portMap[port3000]
+	if bindings[0].HostPort != "" {
+		t.Errorf("expected empty host port for random assignment, got %q", bindings[0].HostPort)
+	}
+}
+
+func TestBuildPortBindingsWebHTTPS(t *testing.T) {
+	cfg := &DesktopRunConfig{WebHTTPPort: 3000, WebHTTPSPort: 3001}
+	portMap, portSet, err := buildPortBindings(cfg, RunOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(portMap) != 2 || len(portSet) != 2 {
+		t.Fatalf("expected 2 mappings (http+https), got %d", len(portMap))
+	}
+	port3001, _ := network.ParsePort("3001/tcp")
+	bindings, ok := portMap[port3001]
+	if !ok {
+		t.Fatal("expected 3001/tcp in port map")
+	}
+	if bindings[0].HostPort != "3001" {
+		t.Errorf("expected host port '3001', got %q", bindings[0].HostPort)
 	}
 }
 

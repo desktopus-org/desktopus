@@ -94,10 +94,8 @@ func generateRuntimeYAML(name string) string {
 	return fmt.Sprintf(`name: %s
 shm_size: 2g
 image: %s:latest
-ports:
-  - "3000:3000"
-  - "3001:3001"
-  - "8082:8082"
+web:
+  http_port: 3000
 # volumes:
 #   - ~/projects:/config/projects
 env:

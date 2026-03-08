@@ -13,5 +13,6 @@ type Provider interface {
 	List(ctx context.Context, all bool) ([]ContainerInfo, error)
 	VolumeList(ctx context.Context) ([]VolumeInfo, error)
 	VolumeRemove(ctx context.Context, name string, force bool) error
+	WebPort(ctx context.Context, nameOrID string) (int, error)
 	Close() error
 }

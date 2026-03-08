@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -52,11 +53,72 @@ func run(name string, args ...string) error {
 	return cmd.Run()
 }
 
+func runInDir(dir, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 // Build compiles the desktopus binary.
 func Build() error {
 	fmt.Println("Building", binaryName+"...")
 	os.MkdirAll(buildDir, 0755)
 	return run("go", "build", "-ldflags", ldflags(), "-o", buildDir+"/"+binaryName, "./cmd/desktopus")
+}
+
+// Viewer builds the desktopus-viewer Electron app for the current arch
+// (requires node/npm). Output: internal/viewer/assets/desktopus-viewer-{arch}.
+func Viewer() error {
+	arch := runtime.GOARCH // "amd64" or "arm64"
+	fmt.Printf("Building desktopus-viewer (%s)...\n", arch)
+
+	if err := runInDir("viewer", "npm", "install"); err != nil {
+		return err
+	}
+	if err := runInDir("viewer", "npm", "run", "build:"+arch); err != nil {
+		return err
+	}
+
+	// electron-builder outputs to viewer/dist/ — copy into the embed assets dir.
+	src := ""
+	for _, candidate := range []string{"viewer/dist/desktopus-viewer", "viewer/dist/desktopus-viewer.AppImage"} {
+		if _, err := os.Stat(candidate); err == nil {
+			src = candidate
+			break
+		}
+	}
+	if src == "" {
+		return fmt.Errorf("desktopus-viewer artifact not found in viewer/dist")
+	}
+
+	dst := "internal/viewer/assets/desktopus-viewer-" + arch
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("reading viewer artifact: %w", err)
+	}
+	if err := os.WriteFile(dst, data, 0755); err != nil {
+		return fmt.Errorf("writing viewer asset: %w", err)
+	}
+	fmt.Println("→", dst)
+	return nil
+}
+
+// BuildAll builds desktopus-viewer, then compiles desktopus with the viewer
+// embedded (-tags embed_viewer). Use this for release builds.
+func BuildAll() error {
+	if err := Viewer(); err != nil {
+		return err
+	}
+	fmt.Println("Building", binaryName, "(with embedded viewer)...")
+	os.MkdirAll(buildDir, 0755)
+	return run("go", "build",
+		"-tags", "embed_viewer",
+		"-ldflags", ldflags(),
+		"-o", buildDir+"/"+binaryName,
+		"./cmd/desktopus",
+	)
 }
 
 // Dev runs desktopus in development mode (go run).

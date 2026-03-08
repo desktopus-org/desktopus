@@ -41,6 +41,10 @@ func (m *Manager) VolumeRemove(ctx context.Context, name string, force bool) err
 	return m.provider.VolumeRemove(ctx, name, force)
 }
 
+func (m *Manager) WebPort(ctx context.Context, nameOrID string) (int, error) {
+	return m.provider.WebPort(ctx, nameOrID)
+}
+
 // DesktopRunConfig is a flattened view of what the runtime needs to create a container.
 // This decouples the runtime package from the config package.
 type DesktopRunConfig struct {
@@ -62,4 +66,11 @@ type DesktopRunConfig struct {
 	// PersistenceHome, when non-empty, is the name of a Docker volume to mount
 	// at the user's home directory (/config for abc, /home/<user> otherwise).
 	PersistenceHome string
+
+	// WebHTTPPort is the host port bound to container port 3000 (the web interface).
+	// 0 (the zero value / default) means Docker assigns a random host port.
+	// WebHTTPSPort is the host port for 3001; 0 means HTTPS is not published.
+	// Both are independent of the generic Ports slice.
+	WebHTTPPort  int
+	WebHTTPSPort int
 }

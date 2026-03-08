@@ -1,5 +1,15 @@
 version: 2
 
+# .goreleaser.yaml is kept for local snapshot builds:
+#   goreleaser build --snapshot --single-target --clean
+#
+# CI releases use .github/workflows/release.yml directly (matrix of native
+# amd64 + arm64 runners) because the embedded viewer binary is arch-specific
+# and cannot be cross-compiled.
+#
+# Before running goreleaser locally, build the viewer asset first:
+#   mage buildAll
+
 before:
   hooks:
     - go mod tidy
@@ -10,6 +20,8 @@ builds:
     binary: desktopus
     env:
       - CGO_ENABLED=0
+    flags:
+      - -tags=embed_viewer
     goos:
       - linux
     goarch:

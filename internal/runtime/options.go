@@ -6,7 +6,7 @@ import "time"
 type RunOptions struct {
 	Name    string            // Override container name
 	Detach  bool              // Run in background
-	GPU     bool              // Force GPU enable
+	GPUType string            // GPU type override (intel|amd|nvidia)
 	Ports   []string          // Additional port mappings (host:container)
 	Volumes []string          // Additional volume mounts (host:container[:ro])
 	Env     map[string]string // Additional env vars
@@ -30,4 +30,5 @@ type ContainerInfo struct {
 const (
 	LabelManagedBy = "org.desktopus.managed-by"
 	LabelDesktop   = "org.desktopus.desktop"
+	LabelBaseOS    = "org.desktopus.base-os"
 )

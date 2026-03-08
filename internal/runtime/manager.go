@@ -42,7 +42,7 @@ type DesktopRunConfig struct {
 	ShmSize  string
 	Ports    []string
 	Volumes  []string
-	GPU      bool
+	GPU      string // intel | amd | nvidia
 	Memory   string
 	CPUs     int
 	Restart  string

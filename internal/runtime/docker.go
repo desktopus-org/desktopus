@@ -35,12 +35,37 @@ func (d *DockerProvider) Run(ctx context.Context, cfg *DesktopRunConfig, opts Ru
 		return "", err
 	}
 
+	gpuType := cfg.GPU
+	if opts.GPUType != "" {
+		gpuType = opts.GPUType
+	}
+
+	if err := d.checkGPUCompatibility(ctx, cfg.ImageTag, gpuType); err != nil {
+		return "", err
+	}
+
 	containerName := cfg.Name
 	if opts.Name != "" {
 		containerName = opts.Name
 	}
 
-	envList := buildEnvList(cfg, opts)
+	envMap := buildEnvMap(cfg, opts)
+	if gpuType != "" {
+		// Enable Wayland compositor with zero-copy GPU encoding.
+		// DRINODE/DRI_NODE select the render device for EGL and VAAPI/NVENC.
+		// Users can override these via env: in desktopus.runtime.yaml.
+		if _, ok := envMap["PIXELFLUX_WAYLAND"]; !ok {
+			envMap["PIXELFLUX_WAYLAND"] = "true"
+		}
+		if _, ok := envMap["DRINODE"]; !ok {
+			envMap["DRINODE"] = "/dev/dri/renderD128"
+		}
+		if _, ok := envMap["DRI_NODE"]; !ok {
+			envMap["DRI_NODE"] = "/dev/dri/renderD128"
+		}
+	}
+	envList := envMapToList(envMap)
+
 	portBindings, exposedPorts, err := buildPortBindings(cfg, opts)
 	if err != nil {
 		return "", fmt.Errorf("configuring ports: %w", err)
@@ -83,11 +108,18 @@ func (d *DockerProvider) Run(ctx context.Context, cfg *DesktopRunConfig, opts Ru
 		hostCfg.NanoCPUs = int64(cfg.CPUs) * 1e9
 	}
 
-	if cfg.GPU || opts.GPU {
+	switch gpuType {
+	case "intel", "amd":
 		hostCfg.Devices = append(hostCfg.Devices, container.DeviceMapping{
 			PathOnHost:        "/dev/dri",
 			PathInContainer:   "/dev/dri",
 			CgroupPermissions: "rwm",
+		})
+	case "nvidia":
+		hostCfg.DeviceRequests = append(hostCfg.DeviceRequests, container.DeviceRequest{
+			Driver:       "nvidia",
+			Count:        -1,
+			Capabilities: [][]string{{"compute", "video", "graphics", "utility"}},
 		})
 	}
 
@@ -161,6 +193,23 @@ func (d *DockerProvider) List(ctx context.Context, all bool) ([]ContainerInfo, e
 	return infos, nil
 }
 
+// checkGPUCompatibility inspects the image's desktopus labels and rejects
+// combinations that are known to be unsupported (e.g. nvidia on alpine).
+// If the image has no desktopus labels (non-desktopus image), the check is skipped.
+func (d *DockerProvider) checkGPUCompatibility(ctx context.Context, image, gpuType string) error {
+	if gpuType != "nvidia" {
+		return nil
+	}
+	info, err := d.docker.ImageInspect(ctx, image)
+	if err != nil || info.Config == nil {
+		return nil // image not inspectable or no config — skip
+	}
+	if baseOS := info.Config.Labels[LabelBaseOS]; baseOS == "alpine" {
+		return fmt.Errorf("gpu \"nvidia\" is not supported on alpine: musl libc is incompatible with Nvidia proprietary drivers; use ubuntu, debian, fedora, arch, or el as the base OS")
+	}
+	return nil
+}
+
 // pullIfMissing pulls the image if it is not already present locally.
 func (d *DockerProvider) pullIfMissing(ctx context.Context, image string, output io.Writer) error {
 	_, err := d.docker.ImageInspect(ctx, image)
@@ -210,7 +259,7 @@ func streamPullOutput(reader io.Reader, output io.Writer) error {
 	}
 }
 
-func buildEnvList(cfg *DesktopRunConfig, opts RunOptions) []string {
+func buildEnvMap(cfg *DesktopRunConfig, opts RunOptions) map[string]string {
 	env := make(map[string]string)
 	for k, v := range cfg.Env {
 		env[k] = v
@@ -218,12 +267,19 @@ func buildEnvList(cfg *DesktopRunConfig, opts RunOptions) []string {
 	for k, v := range opts.Env {
 		env[k] = v
 	}
+	return env
+}
 
+func envMapToList(env map[string]string) []string {
 	list := make([]string, 0, len(env))
 	for k, v := range env {
 		list = append(list, k+"="+v)
 	}
 	return list
+}
+
+func buildEnvList(cfg *DesktopRunConfig, opts RunOptions) []string {
+	return envMapToList(buildEnvMap(cfg, opts))
 }
 
 func buildPortBindings(cfg *DesktopRunConfig, opts RunOptions) (network.PortMap, network.PortSet, error) {

@@ -1,0 +1,10 @@
+name: intel-desktop
+description: "Ubuntu/XFCE desktop with Intel GPU passthrough for hardware-accelerated video"
+image: intel-desktop:latest
+
+base:
+  os: ubuntu
+  desktop: xfce
+
+modules:
+  - chrome

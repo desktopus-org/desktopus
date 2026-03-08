@@ -1,0 +1,10 @@
+name: amd-desktop
+description: "Ubuntu/XFCE desktop with AMD GPU passthrough for hardware-accelerated video"
+image: amd-desktop:latest
+
+base:
+  os: ubuntu
+  desktop: xfce
+
+modules:
+  - chrome

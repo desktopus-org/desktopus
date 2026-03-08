@@ -16,7 +16,7 @@ import (
 var (
 	runFile    string
 	runDetach  bool
-	runGPU     bool
+	runGPUType string
 	runPorts   []string
 	runVolumes []string
 	runEnvs    []string
@@ -71,7 +71,7 @@ var runCmd = &cobra.Command{
 		opts := runtime.RunOptions{
 			Name:    runName,
 			Detach:  runDetach,
-			GPU:     runGPU,
+			GPUType: runGPUType,
 			Ports:   runPorts,
 			Volumes: runVolumes,
 			Env:     envMap,
@@ -100,7 +100,7 @@ var runCmd = &cobra.Command{
 func init() {
 	runCmd.Flags().StringVarP(&runFile, "file", "f", "", "path to desktopus.runtime.yaml or its directory")
 	runCmd.Flags().BoolVarP(&runDetach, "detach", "d", true, "run in background")
-	runCmd.Flags().BoolVar(&runGPU, "gpu", false, "enable GPU passthrough")
+	runCmd.Flags().StringVar(&runGPUType, "gpu", "", "GPU type for passthrough (intel|amd|nvidia)")
 	runCmd.Flags().StringArrayVar(&runPorts, "port", nil, "additional port mappings (host:container)")
 	runCmd.Flags().StringArrayVar(&runVolumes, "volume", nil, "additional volume mounts")
 	runCmd.Flags().StringArrayVar(&runEnvs, "env", nil, "set environment variables (KEY=VALUE)")

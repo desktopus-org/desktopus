@@ -119,6 +119,7 @@ func ValidateImage(cfg *ImageConfig) error {
 
 var validRestartPolicies = []string{"no", "always", "unless-stopped", "on-failure"}
 var validProviders = []string{"docker"}
+var validGPUTypes = []string{"intel", "amd", "nvidia"}
 
 // ValidateRuntime checks a RuntimeConfig for errors
 func ValidateRuntime(cfg *RuntimeConfig) error {
@@ -132,6 +133,11 @@ func ValidateRuntime(cfg *RuntimeConfig) error {
 	if cfg.Provider != "" && !sliceContains(validProviders, cfg.Provider) {
 		errs = append(errs, fmt.Sprintf("provider %q is not supported (valid: %s)",
 			cfg.Provider, strings.Join(validProviders, ", ")))
+	}
+
+	if cfg.GPU != "" && !sliceContains(validGPUTypes, cfg.GPU) {
+		errs = append(errs, fmt.Sprintf("gpu %q is not supported (valid: %s)",
+			cfg.GPU, strings.Join(validGPUTypes, ", ")))
 	}
 
 	if len(errs) > 0 {

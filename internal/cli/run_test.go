@@ -115,7 +115,7 @@ func TestToDesktopRunConfigMapsRuntimeFields(t *testing.T) {
 		ShmSize:  "4g",
 		Ports:    []string{"3000:3000"},
 		Volumes:  []string{"~/projects:/config/projects"},
-		GPU:      true,
+		GPU:      "intel",
 		Memory:   "8g",
 		CPUs:     4,
 		Restart:  "unless-stopped",
@@ -131,7 +131,7 @@ func TestToDesktopRunConfigMapsRuntimeFields(t *testing.T) {
 	}{
 		{"Hostname", cfg.Hostname, "myhost"},
 		{"ShmSize", cfg.ShmSize, "4g"},
-		{"GPU", cfg.GPU, true},
+		{"GPU", cfg.GPU, "intel"},
 		{"Memory", cfg.Memory, "8g"},
 		{"CPUs", cfg.CPUs, 4},
 		{"Restart", cfg.Restart, "unless-stopped"},

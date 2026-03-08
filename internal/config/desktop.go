@@ -121,7 +121,7 @@ type RuntimeConfig struct {
 	ShmSize  string            `yaml:"shm_size,omitempty"`
 	Ports    []string          `yaml:"ports,omitempty"`   // "host:container"
 	Volumes  []string          `yaml:"volumes,omitempty"` // "host:container[:ro]"
-	GPU      bool              `yaml:"gpu,omitempty"`
+	GPU      string            `yaml:"gpu,omitempty"` // intel | amd | nvidia
 	Memory   string            `yaml:"memory,omitempty"`
 	CPUs     int               `yaml:"cpus,omitempty"`
 	Restart  string            `yaml:"restart,omitempty"` // no | always | unless-stopped

@@ -174,8 +174,9 @@ func toDesktopRunConfig(rt *config.RuntimeConfig, imageTag string) *runtime.Desk
 		GPU:      rt.GPU,
 		Memory:   rt.Memory,
 		CPUs:     rt.CPUs,
-		Restart:  rt.Restart,
-		Network:  rt.Network,
-		Env:      env,
+		Restart:         rt.Restart,
+		Network:         rt.Network,
+		Env:             env,
+		PersistenceHome: rt.PersistenceHome,
 	}
 }

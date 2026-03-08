@@ -71,6 +71,10 @@ func (d *DockerProvider) Run(ctx context.Context, cfg *DesktopRunConfig, opts Ru
 		return "", fmt.Errorf("configuring ports: %w", err)
 	}
 	binds := buildVolumes(cfg, opts)
+	if cfg.PersistenceHome != "" {
+		binds = append(binds, d.persistenceBind(ctx, cfg))
+	}
+	d.ensureNamedVolumes(ctx, binds, cfg)
 
 	shmSize := parseSize(cfg.ShmSize)
 	if opts.ShmSize != "" {
@@ -344,6 +348,79 @@ func parseSize(s string) int64 {
 		return 0
 	}
 	return n * multiplier
+}
+
+// persistenceBind returns a named-volume bind string for the desktop's persistent
+// data directory. It inspects the image for org.desktopus.user to determine the
+// correct mount path: /config for the abc user, /home/<user> otherwise.
+// The volume is named <container-name>-data and is auto-created by Docker if absent.
+func (d *DockerProvider) persistenceBind(ctx context.Context, cfg *DesktopRunConfig) string {
+	var userLabel string
+	info, err := d.docker.ImageInspect(ctx, cfg.ImageTag)
+	if err == nil && info.Config != nil {
+		userLabel = info.Config.Labels[LabelUser]
+	}
+	return cfg.PersistenceHome + ":" + persistenceMountPath(userLabel)
+}
+
+// persistenceMountPath returns the container path to mount for persistence.
+// /config is used for the abc user (linuxserver/webtop default), /home/<user> otherwise.
+func persistenceMountPath(userLabel string) string {
+	if userLabel == "" || userLabel == "abc" {
+		return "/config"
+	}
+	return "/home/" + userLabel
+}
+
+// ensureNamedVolumes creates any named Docker volumes in binds that don't yet
+// exist, labelling them so desktopus can track them. Bind mounts (sources
+// starting with "/") are skipped. Errors are silently ignored — Docker will
+// handle missing volumes at container creation time.
+func (d *DockerProvider) ensureNamedVolumes(ctx context.Context, binds []string, cfg *DesktopRunConfig) {
+	for _, bind := range binds {
+		source := strings.SplitN(bind, ":", 2)[0]
+		if strings.HasPrefix(source, "/") {
+			continue // bind mount
+		}
+		labels := map[string]string{
+			LabelManagedBy: "desktopus",
+			LabelDesktop:   cfg.Name,
+		}
+		if source == cfg.PersistenceHome {
+			labels[LabelVolumeType] = "home"
+		}
+		_, _ = d.docker.VolumeCreate(ctx, client.VolumeCreateOptions{
+			Name:   source,
+			Labels: labels,
+		})
+	}
+}
+
+// VolumeList returns all desktopus-managed Docker volumes.
+func (d *DockerProvider) VolumeList(ctx context.Context) ([]VolumeInfo, error) {
+	f := make(client.Filters)
+	f.Add("label", LabelManagedBy+"=desktopus")
+
+	result, err := d.docker.VolumeList(ctx, client.VolumeListOptions{Filters: f})
+	if err != nil {
+		return nil, fmt.Errorf("listing volumes: %w", err)
+	}
+
+	infos := make([]VolumeInfo, len(result.Items))
+	for i, v := range result.Items {
+		infos[i] = VolumeInfo{
+			Name:    v.Name,
+			Desktop: v.Labels[LabelDesktop],
+			Type:    v.Labels[LabelVolumeType],
+		}
+	}
+	return infos, nil
+}
+
+// VolumeRemove removes a desktopus-managed Docker volume by name.
+func (d *DockerProvider) VolumeRemove(ctx context.Context, name string, force bool) error {
+	_, err := d.docker.VolumeRemove(ctx, name, client.VolumeRemoveOptions{Force: force})
+	return err
 }
 
 func formatPorts(ports []container.PortSummary) string {

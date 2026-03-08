@@ -11,5 +11,7 @@ type Provider interface {
 	Stop(ctx context.Context, nameOrID string, timeout int) error
 	Remove(ctx context.Context, nameOrID string, force bool) error
 	List(ctx context.Context, all bool) ([]ContainerInfo, error)
+	VolumeList(ctx context.Context) ([]VolumeInfo, error)
+	VolumeRemove(ctx context.Context, name string, force bool) error
 	Close() error
 }

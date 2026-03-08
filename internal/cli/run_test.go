@@ -150,5 +150,19 @@ func TestToDesktopRunConfigMapsRuntimeFields(t *testing.T) {
 	}
 }
 
+func TestToDesktopRunConfigPersistenceHome(t *testing.T) {
+	rt := &config.RuntimeConfig{PersistenceHome: "my-desktop-data"}
+	cfg := toDesktopRunConfig(rt, "mydesk:latest")
+	if cfg.PersistenceHome != "my-desktop-data" {
+		t.Errorf("expected PersistenceHome 'my-desktop-data', got %q", cfg.PersistenceHome)
+	}
+
+	rt2 := &config.RuntimeConfig{}
+	cfg2 := toDesktopRunConfig(rt2, "mydesk:latest")
+	if cfg2.PersistenceHome != "" {
+		t.Errorf("expected PersistenceHome empty, got %q", cfg2.PersistenceHome)
+	}
+}
+
 // verify toDesktopRunConfig returns the right type
 var _ *runtime.DesktopRunConfig = (*runtime.DesktopRunConfig)(nil)

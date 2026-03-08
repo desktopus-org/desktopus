@@ -46,8 +46,7 @@ func TestImageRefCustomTag(t *testing.T) {
 // --- ResolveImageTag ---
 
 func TestResolveImageTagCLIOverride(t *testing.T) {
-	rt := &RuntimeConfig{DefaultImage: "desktopus/desk:latest"}
-	got, err := ResolveImageTag(rt, "myregistry.io/desk:override")
+	got, err := ResolveImageTag("desk:latest", "myregistry.io/desk:override")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -56,35 +55,23 @@ func TestResolveImageTagCLIOverride(t *testing.T) {
 	}
 }
 
-func TestResolveImageTagRuntimeDefault(t *testing.T) {
-	rt := &RuntimeConfig{DefaultImage: "registry.example.com/desk:v1"}
-	got, err := ResolveImageTag(rt, "")
+func TestResolveImageTagFromConfig(t *testing.T) {
+	got, err := ResolveImageTag("registry.example.com/desk:v1", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got != "registry.example.com/desk:v1" {
-		t.Errorf("expected runtime default_image, got %q", got)
+		t.Errorf("expected config image, got %q", got)
 	}
 }
 
-func TestResolveImageTagNilRuntime(t *testing.T) {
-	_, err := ResolveImageTag(nil, "")
+func TestResolveImageTagNoImage(t *testing.T) {
+	_, err := ResolveImageTag("", "")
 	if err == nil {
-		t.Fatal("expected error for nil runtime with no override")
+		t.Fatal("expected error when no image is defined")
 	}
-	if !strings.Contains(err.Error(), "no image tag defined") {
-		t.Errorf("expected 'no image tag defined' error, got: %v", err)
-	}
-}
-
-func TestResolveImageTagError(t *testing.T) {
-	rt := &RuntimeConfig{}
-	_, err := ResolveImageTag(rt, "")
-	if err == nil {
-		t.Fatal("expected error when no image tag is defined")
-	}
-	if !strings.Contains(err.Error(), "no image tag defined") {
-		t.Errorf("expected 'no image tag defined' error, got: %v", err)
+	if !strings.Contains(err.Error(), "no image defined") {
+		t.Errorf("expected 'no image defined' error, got: %v", err)
 	}
 }
 

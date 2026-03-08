@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 			return err
 		}
 
-		imageTag, err := config.ResolveImageTag(rt, imageOverride)
+		imageTag, err := config.ResolveImageTag(rt.Image, imageOverride)
 		if err != nil {
 			return err
 		}

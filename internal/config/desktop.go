@@ -113,6 +113,13 @@ type FileSpec struct {
 	Mode    string `yaml:"mode,omitempty"` // default "0644"
 }
 
+// WebConfig defines the host port bindings for the desktop's web interface.
+// A value of 0 for a port means Docker assigns a random host port.
+type WebConfig struct {
+	HTTPPort  int `yaml:"http_port,omitempty"`  // host port for container port 3000; 0 = random
+	HTTPSPort int `yaml:"https_port,omitempty"` // host port for container port 3001; 0 = disabled
+}
+
 // RuntimeConfig defines container runtime configuration (desktopus.runtime.yaml)
 type RuntimeConfig struct {
 	Name     string            `yaml:"name,omitempty"`
@@ -129,6 +136,7 @@ type RuntimeConfig struct {
 	Env      map[string]string `yaml:"env,omitempty"`
 	Provider        string            `yaml:"provider,omitempty"`         // container runtime provider (default: docker)
 	PersistenceHome string            `yaml:"persistence_home,omitempty"` // named Docker volume to mount at home/config
+	Web             *WebConfig        `yaml:"web,omitempty"`
 }
 
 // ResolveImageTag resolves the Docker image tag in priority order:

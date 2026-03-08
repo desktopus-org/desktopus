@@ -23,6 +23,7 @@ type ContainerInfo struct {
 	Status  string // running, exited, etc.
 	State   string // human-readable
 	Ports   string // formatted port list
+	WebPort int    // resolved host port for container port 3000 (0 if not mapped)
 	Created time.Time
 }
 

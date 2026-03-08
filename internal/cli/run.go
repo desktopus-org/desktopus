@@ -3,9 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -82,7 +84,8 @@ var runCmd = &cobra.Command{
 
 		runCfg := toDesktopRunConfig(rt, imageTag)
 
-		containerID, err := mgr.Run(context.Background(), runCfg, opts, os.Stdout)
+		ctx := context.Background()
+		containerID, err := mgr.Run(ctx, runCfg, opts, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("failed to run desktop: %w", err)
 		}
@@ -90,13 +93,19 @@ var runCmd = &cobra.Command{
 		name := runCfg.Name
 		fmt.Printf("Desktop %q running (container: %s)\n", name, containerID[:12])
 
-		webPort := findWebPort(rt)
-		if webPort != "" {
-			fmt.Printf("  Web: http://localhost:%s\n", webPort)
+		var webURL string
+		if port, err := mgr.WebPort(ctx, containerID); err == nil && port > 0 {
+			webURL = fmt.Sprintf("http://localhost:%d", port)
 		}
 
-		if !runNoClient && webPort != "" {
-			if err := viewer.Launch("http://localhost:" + webPort); err != nil {
+		if webURL != "" {
+			fmt.Printf("  Web: %s\n", webURL)
+		}
+
+		if !runNoClient && webURL != "" {
+			waitForWeb(webURL)
+			fmt.Println("  Launching viewer...")
+			if err := viewer.Launch(webURL); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: could not launch viewer: %v\n", err)
 			}
 		}
@@ -151,16 +160,6 @@ func containerNameFromImage(image string) string {
 	return name
 }
 
-func findWebPort(rt *config.RuntimeConfig) string {
-	for _, p := range rt.Ports {
-		parts := strings.SplitN(p, ":", 2)
-		if len(parts) == 2 && parts[1] == "3000" {
-			return parts[0]
-		}
-	}
-	return ""
-}
-
 // toDesktopRunConfig builds a DesktopRunConfig from the runtime config and resolved image tag.
 func toDesktopRunConfig(rt *config.RuntimeConfig, imageTag string) *runtime.DesktopRunConfig {
 	name := rt.Name
@@ -173,19 +172,53 @@ func toDesktopRunConfig(rt *config.RuntimeConfig, imageTag string) *runtime.Desk
 		env[k] = v
 	}
 
+	webHTTPSPort := 0
+	if rt.Web != nil {
+		webHTTPSPort = rt.Web.HTTPSPort
+	}
+
+	webHTTPPort := 0
+	if rt.Web != nil && rt.Web.HTTPPort > 0 {
+		webHTTPPort = rt.Web.HTTPPort
+	}
+
 	return &runtime.DesktopRunConfig{
-		Name:     name,
-		ImageTag: imageTag,
-		Hostname: rt.Hostname,
-		ShmSize:  rt.ShmSize,
-		Ports:    rt.Ports,
-		Volumes:  rt.Volumes,
-		GPU:      rt.GPU,
-		Memory:   rt.Memory,
-		CPUs:     rt.CPUs,
+		Name:            name,
+		ImageTag:        imageTag,
+		Hostname:        rt.Hostname,
+		ShmSize:         rt.ShmSize,
+		Ports:           rt.Ports,
+		Volumes:         rt.Volumes,
+		GPU:             rt.GPU,
+		Memory:          rt.Memory,
+		CPUs:            rt.CPUs,
 		Restart:         rt.Restart,
 		Network:         rt.Network,
 		Env:             env,
 		PersistenceHome: rt.PersistenceHome,
+		WebHTTPPort:     webHTTPPort,
+		WebHTTPSPort:    webHTTPSPort,
 	}
+}
+
+// waitForWeb polls the given URL until it returns any HTTP response or the
+// 60-second timeout expires. It prints a waiting message on the first probe.
+func waitForWeb(url string) {
+	client := &http.Client{Timeout: 2 * time.Second}
+	deadline := time.Now().Add(60 * time.Second)
+	first := true
+	for time.Now().Before(deadline) {
+		resp, err := client.Get(url)
+		if err == nil {
+			resp.Body.Close()
+			return
+		}
+		if first {
+			fmt.Printf("  Waiting for web interface to be ready...")
+			first = false
+		}
+		fmt.Print(".")
+		time.Sleep(2 * time.Second)
+	}
+	fmt.Println(" timeout, launching anyway")
 }

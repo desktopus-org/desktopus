@@ -3,7 +3,11 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-const url = process.argv[2] || 'http://localhost:3000';
+// In dev mode (`electron . <url>`), Electron inserts the app path at argv[1],
+// so the user-supplied URL lands at argv[2].  In a packaged binary the app
+// path is not injected, so the URL is at argv[1].  process.defaultApp is true
+// only when launched via the Electron CLI (dev mode).
+const url = (process.defaultApp ? process.argv[2] : process.argv[1]) || 'http://localhost:3000';
 
 // Keys Electron would otherwise handle internally — suppress them so
 // Selkies's renderer receives everything.

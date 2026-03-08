@@ -20,13 +20,13 @@ var listCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List desktop containers",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dockerClient, err := newDockerClient()
+		provider, err := runtime.NewProvider("")
 		if err != nil {
 			return err
 		}
-		defer func() { _ = dockerClient.Close() }()
+		defer func() { _ = provider.Close() }()
 
-		mgr := runtime.NewManager(dockerClient)
+		mgr := runtime.NewManager(provider)
 		containers, err := mgr.List(context.Background(), listAll)
 		if err != nil {
 			return err

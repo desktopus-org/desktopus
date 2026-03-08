@@ -127,6 +127,7 @@ type RuntimeConfig struct {
 	Restart  string            `yaml:"restart,omitempty"` // no | always | unless-stopped
 	Network  string            `yaml:"network,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
+	Provider string            `yaml:"provider,omitempty"` // container runtime provider (default: docker)
 }
 
 // ResolveImageTag resolves the Docker image tag in priority order:

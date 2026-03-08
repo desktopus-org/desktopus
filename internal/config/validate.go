@@ -118,12 +118,24 @@ func ValidateImage(cfg *ImageConfig) error {
 }
 
 var validRestartPolicies = []string{"no", "always", "unless-stopped", "on-failure"}
+var validProviders = []string{"docker"}
 
 // ValidateRuntime checks a RuntimeConfig for errors
 func ValidateRuntime(cfg *RuntimeConfig) error {
+	var errs []string
+
 	if cfg.Restart != "" && !sliceContains(validRestartPolicies, cfg.Restart) {
-		return fmt.Errorf("config validation failed:\n  - restart %q is not valid (valid: %s)",
-			cfg.Restart, strings.Join(validRestartPolicies, ", "))
+		errs = append(errs, fmt.Sprintf("restart %q is not valid (valid: %s)",
+			cfg.Restart, strings.Join(validRestartPolicies, ", ")))
+	}
+
+	if cfg.Provider != "" && !sliceContains(validProviders, cfg.Provider) {
+		errs = append(errs, fmt.Sprintf("provider %q is not supported (valid: %s)",
+			cfg.Provider, strings.Join(validProviders, ", ")))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("config validation failed:\n  - %s", strings.Join(errs, "\n  - "))
 	}
 	return nil
 }

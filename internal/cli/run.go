@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,35 +25,29 @@ var (
 )
 
 var runCmd = &cobra.Command{
-	Use:   "run [name]",
+	Use:   "run [image]",
 	Short: "Run a desktop container",
 	Long:  "Create and start a container from a built desktop image.",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Find config file
-		file := runFile
-		if file == "" {
-			file = "."
+		var imageOverride string
+		if len(args) > 0 {
+			imageOverride = args[0]
 		}
 
-		configPath, err := config.FindImageConfig(file)
+		// Find desktopus.runtime.yaml
+		runtimePath, err := findRuntimeYAML(runFile)
 		if err != nil {
 			return err
 		}
 
-		img, err := config.LoadImage(configPath)
-		if err != nil {
-			return err
-		}
-
-		runtimePath := config.FindRuntimeConfig(configPath)
 		rt, err := config.LoadRuntime(runtimePath)
 		if err != nil {
 			return err
 		}
 
-		// Validate required env vars
-		if err := validateRequiredEnv(img, rt, runEnvs); err != nil {
+		imageTag, err := config.ResolveImageTag(rt, imageOverride)
+		if err != nil {
 			return err
 		}
 
@@ -84,17 +79,16 @@ var runCmd = &cobra.Command{
 			Remove:  runRemove,
 		}
 
-		// Build the runtime config from the image and runtime configs
-		runCfg := toDesktopRunConfig(img, rt)
+		runCfg := toDesktopRunConfig(rt, imageTag)
 
 		containerID, err := mgr.Run(context.Background(), runCfg, opts, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("failed to run desktop: %w", err)
 		}
 
-		fmt.Printf("Desktop %q running (container: %s)\n", img.Name, containerID[:12])
+		name := runCfg.Name
+		fmt.Printf("Desktop %q running (container: %s)\n", name, containerID[:12])
 
-		// Find the web port
 		webPort := findWebPort(rt)
 		if webPort != "" {
 			fmt.Printf("  Web: http://localhost:%s\n", webPort)
@@ -105,7 +99,7 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	runCmd.Flags().StringVarP(&runFile, "file", "f", "", "path to desktopus.yaml")
+	runCmd.Flags().StringVarP(&runFile, "file", "f", "", "path to desktopus.runtime.yaml or its directory")
 	runCmd.Flags().BoolVarP(&runDetach, "detach", "d", true, "run in background")
 	runCmd.Flags().BoolVar(&runGPU, "gpu", false, "enable GPU passthrough")
 	runCmd.Flags().StringArrayVar(&runPorts, "port", nil, "additional port mappings (host:container)")
@@ -115,40 +109,38 @@ func init() {
 	runCmd.Flags().BoolVar(&runRemove, "rm", false, "remove container when stopped")
 }
 
-func validateRequiredEnv(img *config.ImageConfig, rt *config.RuntimeConfig, cliEnvs []string) error {
-	provided := make(map[string]bool)
-
-	// From defaults
-	for name, spec := range img.Env {
-		if spec.Default != "" {
-			provided[name] = true
-		}
+// findRuntimeYAML resolves the path to desktopus.runtime.yaml.
+// If path is empty or a directory, it looks for desktopus.runtime.yaml inside it.
+// If path is a file, it uses it directly.
+func findRuntimeYAML(path string) (string, error) {
+	if path == "" {
+		path = "."
 	}
 
-	// From runtime env
-	for k := range rt.Env {
-		provided[k] = true
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", fmt.Errorf("accessing path %q: %w", path, err)
 	}
 
-	// From CLI
-	for _, e := range cliEnvs {
-		parts := strings.SplitN(e, "=", 2)
-		if len(parts) >= 1 {
-			provided[parts[0]] = true
-		}
+	if info.IsDir() {
+		return filepath.Join(path, "desktopus.runtime.yaml"), nil
 	}
 
-	var missing []string
-	for name, spec := range img.Env {
-		if spec.Required && !provided[name] {
-			missing = append(missing, name)
-		}
-	}
+	return path, nil
+}
 
-	if len(missing) > 0 {
-		return fmt.Errorf("required environment variables not set: %s\nUse --env KEY=VALUE to provide them", strings.Join(missing, ", "))
+// containerNameFromImage derives a container name from an image tag.
+// "registry.example.com/mydesk:v1" → "mydesk"
+// "desktopus/mydesk:latest" → "mydesk"
+func containerNameFromImage(image string) string {
+	name := image
+	if i := strings.LastIndex(name, "/"); i >= 0 {
+		name = name[i+1:]
 	}
-	return nil
+	if i := strings.Index(name, ":"); i >= 0 {
+		name = name[:i]
+	}
+	return name
 }
 
 func findWebPort(rt *config.RuntimeConfig) string {
@@ -161,21 +153,21 @@ func findWebPort(rt *config.RuntimeConfig) string {
 	return ""
 }
 
-// toDesktopRunConfig converts ImageConfig + RuntimeConfig into a runtime DesktopRunConfig
-func toDesktopRunConfig(img *config.ImageConfig, rt *config.RuntimeConfig) *runtime.DesktopRunConfig {
-	env := make(map[string]string)
-	for name, spec := range img.Env {
-		if spec.Default != "" {
-			env[name] = spec.Default
-		}
+// toDesktopRunConfig builds a DesktopRunConfig from the runtime config and resolved image tag.
+func toDesktopRunConfig(rt *config.RuntimeConfig, imageTag string) *runtime.DesktopRunConfig {
+	name := rt.Name
+	if name == "" {
+		name = containerNameFromImage(imageTag)
 	}
+
+	env := make(map[string]string)
 	for k, v := range rt.Env {
 		env[k] = v
 	}
 
 	return &runtime.DesktopRunConfig{
-		Name:     img.Name,
-		ImageTag: img.ImageTag(),
+		Name:     name,
+		ImageTag: imageTag,
 		Hostname: rt.Hostname,
 		ShmSize:  rt.ShmSize,
 		Ports:    rt.Ports,

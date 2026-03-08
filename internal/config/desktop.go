@@ -6,13 +6,13 @@ import "fmt"
 type ImageConfig struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description,omitempty"`
-	User        string            `yaml:"user,omitempty"`
-	Home        string            `yaml:"home,omitempty"`
-	Base        BaseSpec          `yaml:"base"`
-	Modules     []ModuleRef       `yaml:"modules,omitempty"`
-	Env         map[string]EnvVar `yaml:"env,omitempty"`
-	PostRun     []PostRunScript   `yaml:"postrun,omitempty"`
-	Files       []FileSpec        `yaml:"files,omitempty"`
+	User         string            `yaml:"user,omitempty"`
+	Home         string            `yaml:"home,omitempty"`
+	Base         BaseSpec          `yaml:"base"`
+	Modules      []ModuleRef       `yaml:"modules,omitempty"`
+	Env          map[string]EnvVar `yaml:"env,omitempty"`
+	PostRun      []PostRunScript   `yaml:"postrun,omitempty"`
+	Files        []FileSpec        `yaml:"files,omitempty"`
 }
 
 // EffectiveUser returns the resolved Linux username for this desktop.
@@ -114,7 +114,9 @@ type FileSpec struct {
 
 // RuntimeConfig defines container runtime configuration (desktopus.runtime.yaml)
 type RuntimeConfig struct {
-	Hostname string            `yaml:"hostname,omitempty"`
+	Name         string            `yaml:"name,omitempty"`
+	DefaultImage string            `yaml:"default_image,omitempty"`
+	Hostname     string            `yaml:"hostname,omitempty"`
 	ShmSize  string            `yaml:"shm_size,omitempty"`
 	Ports    []string          `yaml:"ports,omitempty"`   // "host:container"
 	Volumes  []string          `yaml:"volumes,omitempty"` // "host:container[:ro]"
@@ -126,7 +128,14 @@ type RuntimeConfig struct {
 	Env      map[string]string `yaml:"env,omitempty"`
 }
 
-// ImageTag returns the desktopus image tag for this desktop
-func (d *ImageConfig) ImageTag() string {
-	return fmt.Sprintf("desktopus/%s:latest", d.Name)
+// ResolveImageTag resolves the Docker image tag in priority order:
+// override (CLI flag) > rt.DefaultImage > error
+func ResolveImageTag(rt *RuntimeConfig, override string) (string, error) {
+	if override != "" {
+		return override, nil
+	}
+	if rt != nil && rt.DefaultImage != "" {
+		return rt.DefaultImage, nil
+	}
+	return "", fmt.Errorf("no image tag defined: set default_image in desktopus.runtime.yaml, or specify it explicitly")
 }

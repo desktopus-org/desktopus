@@ -44,7 +44,7 @@ var initCmd = &cobra.Command{
 		}
 
 		runtimePath := filepath.Join(dir, "desktopus.runtime.yaml")
-		if err := os.WriteFile(runtimePath, []byte(generateRuntimeYAML()), 0644); err != nil {
+		if err := os.WriteFile(runtimePath, []byte(generateRuntimeYAML(name)), 0644); err != nil {
 			return fmt.Errorf("writing desktopus.runtime.yaml: %w", err)
 		}
 
@@ -54,7 +54,7 @@ var initCmd = &cobra.Command{
 		fmt.Printf("  1. Edit desktopus.yaml to customize your desktop\n")
 		fmt.Printf("  2. Edit desktopus.runtime.yaml for machine-local settings (ports, volumes, GPU)\n")
 		fmt.Printf("  3. Run: desktopus build .\n")
-		fmt.Printf("  4. Run: desktopus run %s\n", name)
+		fmt.Printf("  4. Run: desktopus run\n")
 		return nil
 	},
 }
@@ -89,8 +89,10 @@ modules:
 `, name, osName, desktop)
 }
 
-func generateRuntimeYAML() string {
-	return `shm_size: 2g
+func generateRuntimeYAML(name string) string {
+	return fmt.Sprintf(`name: %s
+default_image: desktopus/%s:latest
+shm_size: 2g
 ports:
   - "3000:3000"
   - "3001:3001"
@@ -101,5 +103,5 @@ env:
   PUID: "1000"
   PGID: "1000"
   TZ: UTC
-`
+`, name, name)
 }

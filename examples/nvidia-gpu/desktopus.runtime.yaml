@@ -1,0 +1,29 @@
+name: nvidia-desktop
+image: nvidia-desktop:latest
+shm_size: 2g
+
+# Nvidia GPU passthrough via nvidia-container-toolkit.
+#
+# Requirements:
+#   1. Nvidia driver >= 580 on the host
+#   2. Kernel parameter: nvidia-drm.modeset=1 (add to bootloader config)
+#   3. On headless systems, run once per boot: nvidia-modprobe --modeset
+#   4. Configure Docker for Nvidia runtime:
+#        sudo nvidia-ctk runtime configure --runtime=docker
+#        sudo systemctl restart docker
+#
+# Note: Nvidia is not supported on alpine-based images.
+gpu: nvidia
+
+ports:
+  - "3000:3000"   # web UI (HTTP)
+  - "3001:3001"   # web UI (HTTPS)
+
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+  # Desktopus automatically sets:
+  #   PIXELFLUX_WAYLAND=true   (Wayland compositor with zero-copy encoding)
+  #   DRINODE=/dev/dri/renderD128   (render node for EGL/3D — auto-injected by nvidia runtime)
+  #   DRI_NODE=/dev/dri/renderD128  (render node for NVENC encoding)

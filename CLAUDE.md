@@ -61,7 +61,7 @@ desktopus.yaml → resolve modules → check compatibility
 - **Container labels**: `org.desktopus.managed-by=desktopus` and `org.desktopus.desktop=<name>` used to filter desktopus-managed containers.
 - **Config validation**: Uses a compatibility matrix — each OS (`ubuntu|debian|fedora|arch|alpine|el`) maps to its valid desktops (`i3|kde|mate|xfce`; EL has no KDE).
 - **Version injection**: `main.go` has `var version, commit, buildTime` set via ldflags in `magefile.go`.
-- **Image tagging**: `desktopus/<name>:<tag>` (default tag: `latest`).
+- **Image tagging**: `desktopus build` reads `image` from `desktopus.yaml` only (`--tag` overrides). `desktopus run` reads `image` from `desktopus.runtime.yaml` only (CLI arg overrides). Each command is independent — fails if no image is provided.
 
 ## Plan Documents
 

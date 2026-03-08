@@ -1,0 +1,25 @@
+name: amd-desktop
+image: amd-desktop:latest
+shm_size: 2g
+
+# AMD GPU passthrough via /dev/dri
+# Requires amdgpu kernel module loaded on the host.
+# Add the container user to the 'video' and 'render' groups on the host if needed.
+gpu: amd
+
+ports:
+  - "3000:3000"   # web UI (HTTP)
+  - "3001:3001"   # web UI (HTTPS)
+
+env:
+  PUID: "1000"
+  PGID: "1000"
+  TZ: UTC
+  # Desktopus automatically sets:
+  #   PIXELFLUX_WAYLAND=true   (Wayland compositor with zero-copy encoding)
+  #   DRINODE=/dev/dri/renderD128   (render node for EGL/3D)
+  #   DRI_NODE=/dev/dri/renderD128  (render node for VAAPI encoding)
+  #
+  # Override DRINODE/DRI_NODE if you have multiple GPUs and want a specific one:
+  # DRINODE: /dev/dri/renderD129
+  # DRI_NODE: /dev/dri/renderD129

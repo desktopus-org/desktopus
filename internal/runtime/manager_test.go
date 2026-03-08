@@ -184,6 +184,26 @@ func TestFormatPortsEmpty(t *testing.T) {
 	}
 }
 
+func TestPersistenceMountPath(t *testing.T) {
+	tests := []struct {
+		userLabel string
+		want      string
+	}{
+		{"", "/config"},       // no label → default abc behavior
+		{"abc", "/config"},    // explicit abc user → /config
+		{"desktopus", "/home/desktopus"},
+		{"alice", "/home/alice"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.userLabel, func(t *testing.T) {
+			got := persistenceMountPath(tt.userLabel)
+			if got != tt.want {
+				t.Errorf("persistenceMountPath(%q) = %q, want %q", tt.userLabel, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFormatPortsNoPublic(t *testing.T) {
 	ports := []container.PortSummary{
 		{PrivatePort: 3000, PublicPort: 0, Type: "tcp"},

@@ -6,7 +6,7 @@ import "time"
 type RunOptions struct {
 	Name    string            // Override container name
 	Detach  bool              // Run in background
-	GPU     bool              // Force GPU enable
+	GPUType string            // GPU type override (intel|amd|nvidia)
 	Ports   []string          // Additional port mappings (host:container)
 	Volumes []string          // Additional volume mounts (host:container[:ro])
 	Env     map[string]string // Additional env vars
@@ -26,8 +26,18 @@ type ContainerInfo struct {
 	Created time.Time
 }
 
-// Labels used to track desktopus-managed containers
+// Labels used to track desktopus-managed containers and volumes
 const (
-	LabelManagedBy = "org.desktopus.managed-by"
-	LabelDesktop   = "org.desktopus.desktop"
+	LabelManagedBy  = "org.desktopus.managed-by"
+	LabelDesktop    = "org.desktopus.desktop"
+	LabelBaseOS     = "org.desktopus.base-os"
+	LabelUser       = "org.desktopus.user"
+	LabelVolumeType = "org.desktopus.volume-type"
 )
+
+// VolumeInfo represents a desktopus-managed Docker volume
+type VolumeInfo struct {
+	Name    string
+	Desktop string // from org.desktopus.desktop label
+	Type    string // from org.desktopus.volume-type label (e.g. "home")
+}

@@ -2,10 +2,11 @@ package config
 
 import "fmt"
 
-// DesktopConfig is the top-level structure for desktopus.yaml
-type DesktopConfig struct {
+// ImageConfig is the top-level structure for desktopus.yaml
+type ImageConfig struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description,omitempty"`
+	Image       string            `yaml:"image,omitempty"`
 	User        string            `yaml:"user,omitempty"`
 	Home        string            `yaml:"home,omitempty"`
 	Base        BaseSpec          `yaml:"base"`
@@ -13,14 +14,13 @@ type DesktopConfig struct {
 	Env         map[string]EnvVar `yaml:"env,omitempty"`
 	PostRun     []PostRunScript   `yaml:"postrun,omitempty"`
 	Files       []FileSpec        `yaml:"files,omitempty"`
-	Runtime     RuntimeSpec       `yaml:"runtime,omitempty"`
 }
 
 // EffectiveUser returns the resolved Linux username for this desktop.
 // If user is "abc", returns "abc" (the built-in linuxserver/webtop user).
 // If user is unset, defaults to "desktopus".
 // Otherwise returns the configured user.
-func (d *DesktopConfig) EffectiveUser() string {
+func (d *ImageConfig) EffectiveUser() string {
 	if d.User == "" {
 		return "desktopus"
 	}
@@ -31,7 +31,7 @@ func (d *DesktopConfig) EffectiveUser() string {
 // If user is "abc", returns "/config" (the built-in linuxserver/webtop home).
 // If home is explicitly set, returns that value.
 // Otherwise returns "/home/<effective-user>".
-func (d *DesktopConfig) EffectiveHome() string {
+func (d *ImageConfig) EffectiveHome() string {
 	if d.User == "abc" {
 		return "/config"
 	}
@@ -113,21 +113,32 @@ type FileSpec struct {
 	Mode    string `yaml:"mode,omitempty"` // default "0644"
 }
 
-// RuntimeSpec defines container runtime configuration
-type RuntimeSpec struct {
+// RuntimeConfig defines container runtime configuration (desktopus.runtime.yaml)
+type RuntimeConfig struct {
+	Name     string            `yaml:"name,omitempty"`
+	Image    string            `yaml:"image,omitempty"` // overrides desktopus.yaml image for this machine
 	Hostname string            `yaml:"hostname,omitempty"`
 	ShmSize  string            `yaml:"shm_size,omitempty"`
-	Ports    []string          `yaml:"ports,omitempty"`    // "host:container"
-	Volumes  []string          `yaml:"volumes,omitempty"`  // "host:container[:ro]"
-	GPU      bool              `yaml:"gpu,omitempty"`
+	Ports    []string          `yaml:"ports,omitempty"`   // "host:container"
+	Volumes  []string          `yaml:"volumes,omitempty"` // "host:container[:ro]"
+	GPU      string            `yaml:"gpu,omitempty"` // intel | amd | nvidia
 	Memory   string            `yaml:"memory,omitempty"`
 	CPUs     int               `yaml:"cpus,omitempty"`
-	Restart  string            `yaml:"restart,omitempty"`  // no | always | unless-stopped
+	Restart  string            `yaml:"restart,omitempty"` // no | always | unless-stopped
 	Network  string            `yaml:"network,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
+	Provider        string            `yaml:"provider,omitempty"`         // container runtime provider (default: docker)
+	PersistenceHome string            `yaml:"persistence_home,omitempty"` // named Docker volume to mount at home/config
 }
 
-// ImageTag returns the desktopus image tag for this desktop
-func (d *DesktopConfig) ImageTag() string {
-	return fmt.Sprintf("desktopus/%s:latest", d.Name)
+// ResolveImageTag resolves the Docker image tag in priority order:
+// override (CLI flag) > image (from config file) > error
+func ResolveImageTag(image, override string) (string, error) {
+	if override != "" {
+		return override, nil
+	}
+	if image != "" {
+		return image, nil
+	}
+	return "", fmt.Errorf("no image defined: set image in the config file, or specify it explicitly")
 }

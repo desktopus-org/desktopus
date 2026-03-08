@@ -45,8 +45,8 @@ func sliceContains(slice []string, val string) bool {
 	return false
 }
 
-// ValidateDesktop checks a DesktopConfig for errors
-func ValidateDesktop(cfg *DesktopConfig) error {
+// ValidateImage checks an ImageConfig for errors
+func ValidateImage(cfg *ImageConfig) error {
 	var errs []string
 
 	if cfg.Name == "" {
@@ -114,5 +114,34 @@ func ValidateDesktop(cfg *DesktopConfig) error {
 		return fmt.Errorf("config validation failed:\n  - %s", strings.Join(errs, "\n  - "))
 	}
 
+	return nil
+}
+
+var validRestartPolicies = []string{"no", "always", "unless-stopped", "on-failure"}
+var validProviders = []string{"docker"}
+var validGPUTypes = []string{"intel", "amd", "nvidia"}
+
+// ValidateRuntime checks a RuntimeConfig for errors
+func ValidateRuntime(cfg *RuntimeConfig) error {
+	var errs []string
+
+	if cfg.Restart != "" && !sliceContains(validRestartPolicies, cfg.Restart) {
+		errs = append(errs, fmt.Sprintf("restart %q is not valid (valid: %s)",
+			cfg.Restart, strings.Join(validRestartPolicies, ", ")))
+	}
+
+	if cfg.Provider != "" && !sliceContains(validProviders, cfg.Provider) {
+		errs = append(errs, fmt.Sprintf("provider %q is not supported (valid: %s)",
+			cfg.Provider, strings.Join(validProviders, ", ")))
+	}
+
+	if cfg.GPU != "" && !sliceContains(validGPUTypes, cfg.GPU) {
+		errs = append(errs, fmt.Sprintf("gpu %q is not supported (valid: %s)",
+			cfg.GPU, strings.Join(validGPUTypes, ", ")))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("config validation failed:\n  - %s", strings.Join(errs, "\n  - "))
+	}
 	return nil
 }

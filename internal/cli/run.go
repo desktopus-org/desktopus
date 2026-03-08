@@ -11,17 +11,19 @@ import (
 
 	"github.com/desktopus-org/desktopus/internal/config"
 	"github.com/desktopus-org/desktopus/internal/runtime"
+	"github.com/desktopus-org/desktopus/internal/viewer"
 )
 
 var (
-	runFile    string
-	runDetach  bool
-	runGPUType string
-	runPorts   []string
-	runVolumes []string
-	runEnvs    []string
-	runName    string
-	runRemove  bool
+	runFile     string
+	runDetach   bool
+	runGPUType  string
+	runPorts    []string
+	runVolumes  []string
+	runEnvs     []string
+	runName     string
+	runRemove   bool
+	runNoClient bool
 )
 
 var runCmd = &cobra.Command{
@@ -93,6 +95,12 @@ var runCmd = &cobra.Command{
 			fmt.Printf("  Web: http://localhost:%s\n", webPort)
 		}
 
+		if !runNoClient && webPort != "" {
+			if err := viewer.Launch("http://localhost:" + webPort); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not launch viewer: %v\n", err)
+			}
+		}
+
 		return nil
 	},
 }
@@ -106,6 +114,7 @@ func init() {
 	runCmd.Flags().StringArrayVar(&runEnvs, "env", nil, "set environment variables (KEY=VALUE)")
 	runCmd.Flags().StringVar(&runName, "name", "", "override container name")
 	runCmd.Flags().BoolVar(&runRemove, "rm", false, "remove container when stopped")
+	runCmd.Flags().BoolVar(&runNoClient, "no-client", false, "do not launch desktopus-viewer after the container starts")
 }
 
 // findRuntimeYAML resolves the path to desktopus.runtime.yaml.

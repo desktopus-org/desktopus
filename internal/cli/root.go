@@ -45,6 +45,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(connectCmd)
 	rootCmd.AddCommand(stopCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(volumeCmd)

@@ -9,9 +9,53 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
+  # Build desktopus-viewer for each arch on a native runner.
+  build-viewer:
+    name: Build viewer (${{ matrix.goarch }})
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: viewer
+
+      - name: Build desktopus-viewer
+        run: npm run build:${{ matrix.goarch }}
+        working-directory: viewer
+
+      - name: Upload viewer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: viewer-${{ matrix.goarch }}
+          path: viewer/dist/desktopus-viewer
+          if-no-files-found: error
+
+  # Build desktopus (with embedded viewer) for each arch on a native runner.
+  build-binary:
+    name: Build binary (${{ matrix.goarch }})
+    needs: build-viewer
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -22,9 +66,74 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - uses: goreleaser/goreleaser-action@v7
+      - name: Download viewer artifact
+        uses: actions/download-artifact@v4
         with:
-          version: latest
-          args: release --clean
+          name: viewer-${{ matrix.goarch }}
+          path: internal/viewer/assets/
+
+      - name: Rename viewer asset
+        run: |
+          mv internal/viewer/assets/desktopus-viewer \
+             internal/viewer/assets/desktopus-viewer-${{ matrix.goarch }}
+
+      - name: Build desktopus
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          COMMIT="${GITHUB_SHA:0:7}"
+          BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          LDPKG="github.com/desktopus-org/desktopus/internal/cli"
+          go build \
+            -tags embed_viewer \
+            -ldflags "-s -w \
+              -X ${LDPKG}.version=${VERSION} \
+              -X ${LDPKG}.commit=${COMMIT} \
+              -X ${LDPKG}.buildTime=${BUILD_TIME}" \
+            -o bin/desktopus \
+            ./cmd/desktopus
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          ARCHIVE="desktopus_${VERSION}_linux_${{ matrix.goarch }}.tar.gz"
+          tar -czf "${ARCHIVE}" -C bin desktopus
+          sha256sum "${ARCHIVE}" >> checksums.txt
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.goarch }}
+          path: |
+            desktopus_*.tar.gz
+            checksums.txt
+          if-no-files-found: error
+
+  # Create the GitHub release and attach all artifacts.
+  release:
+    name: Release
+    needs: build-binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist/
+
+      - name: Merge checksums
+        run: cat dist/checksums.txt | sort > checksums.txt
+
+      - name: Create GitHub release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            dist/*.tar.gz \
+            checksums.txt \
+            --generate-notes \
+            --title "${{ github.ref_name }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

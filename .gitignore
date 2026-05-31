@@ -28,3 +28,5 @@ web/node_modules/
 # Test
 coverage.out
 coverage.html
+# hunkwise
+.vscode/hunkwise/

@@ -63,9 +63,15 @@ desktopus.yaml → resolve modules → check compatibility
 - **Version injection**: `main.go` has `var version, commit, buildTime` set via ldflags in `magefile.go`.
 - **Image tagging**: `desktopus build` reads `image` from `desktopus.yaml` only (`--tag` overrides). `desktopus run` reads `image` from `desktopus.runtime.yaml` only (CLI arg overrides). Each command is independent — fails if no image is provided.
 
-## Plan Documents
+## Specs & Docs
 
-All planning and design docs are in `docs/plan/`. See `docs/plan/README.md` for the index. The project follows a 6-phase implementation plan.
+This project uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven development:
+
+- **What the system does** → `openspec/specs/` (source of truth, built incrementally).
+- **Planned / in-flight work** → `openspec/changes/`. Start a change with `/opsx:propose`, implement with `/opsx:apply`, finalize with `/opsx:archive`.
+- **Durable design rationale + base-image facts** → `docs/reference.md`.
+
+The original 6-phase plan under `docs/plan/` was retired on 2026-05-31 (priorities shifted); its history is in git.
 
 ## Git Workflow
 

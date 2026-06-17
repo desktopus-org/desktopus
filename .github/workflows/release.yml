@@ -38,7 +38,7 @@ jobs:
         working-directory: viewer
 
       - name: Upload viewer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: viewer-${{ matrix.goarch }}
           path: viewer/dist/desktopus-viewer
@@ -102,7 +102,7 @@ jobs:
           sha256sum "desktopus_${GITHUB_REF_NAME}_linux_${{ matrix.goarch }}" >> ../checksums.txt
 
       - name: Upload release artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.goarch }}
           path: |
